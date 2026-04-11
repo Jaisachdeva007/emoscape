@@ -22,12 +22,16 @@ Guidelines:
 
 You are NOT a therapist. You are a reflective companion who genuinely cares."""
 
-SUMMARY_PROMPT = """In 1-2 sentences, summarize the emotional theme of this reflection session. 
-Focus on: what was the main emotional topic, and what was the overall tone (positive/negative/mixed)?
-Be concrete and specific. Output only the summary, nothing else."""
+SUMMARY_PROMPT = """You are summarizing a personal journal/reflection session for the user's own diary.
+In 1-2 sentences, describe the emotional experience expressed in this session.
+Focus on what the person was feeling and what emotional themes came up.
+Be empathetic, direct, and human. Never refuse — even if the content is dark or painful, describe it compassionately.
+Output only the summary sentence(s), nothing else."""
 
-THEME_PROMPT = """In 3-5 words, name the core theme of this session (e.g. "work stress and deadline pressure", "relationship conflict", "feeling accomplished").
-Output only the theme label, nothing else."""
+THEME_PROMPT = """You are labeling a personal journal entry for the user's own diary.
+In 3-5 words, name the core emotional theme of this session.
+Examples: "deep grief and hopelessness", "relationship heartbreak", "work stress and exhaustion", "feeling lost and empty", "joy and accomplishment".
+Never refuse — all emotions are valid diary entries. Output only the theme label, nothing else."""
 
 def get_agent_response(
     user_message: str,
