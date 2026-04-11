@@ -109,7 +109,7 @@ body { background:#04040e; color:#e4e4f0; font-family:system-ui,sans-serif; over
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.142.0/build/three.min.js"></script>
 <script>
 // ===== STATE =====
 let sessionId = null, sessionStart = null, turnCount = 0;
@@ -200,18 +200,18 @@ function buildAvatar() {
   }
 
   // Body
-  const torso = mesh(new THREE.CapsuleGeometry(0.22, 0.5, 8, 16), shirt);
+  const torso = mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.5, 12), shirt);
   torso.position.y = 1.05;
   group.add(torso);
 
   // Hips
-  const hips = mesh(new THREE.CapsuleGeometry(0.2, 0.15, 8, 16), pants);
+  const hips = mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.15, 12), pants);
   hips.position.y = 0.72;
   group.add(hips);
 
   // Legs
   [-0.1, 0.1].forEach(x => {
-    const leg = mesh(new THREE.CapsuleGeometry(0.09, 0.55, 8, 16), pants);
+    const leg = mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.55, 12), pants);
     leg.position.set(x, 0.3, 0);
     group.add(leg);
     const foot = mesh(new THREE.BoxGeometry(0.1, 0.06, 0.18), new THREE.MeshStandardMaterial({ color:0x1a1a2e }));
@@ -221,7 +221,7 @@ function buildAvatar() {
 
   // Arms
   [-0.35, 0.35].forEach(x => {
-    const arm = mesh(new THREE.CapsuleGeometry(0.07, 0.42, 8, 16), shirt);
+    const arm = mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.42, 12), shirt);
     arm.position.set(x, 1.05, 0);
     arm.rotation.z = x < 0 ? 0.15 : -0.15;
     group.add(arm);
