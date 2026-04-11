@@ -835,19 +835,31 @@ async function renderDiary() {
     </div>`;
   }).join('');
 
-  // Now load summaries one at a time in background
-  for (const [dayLabel, entries] of dayEntries) {
-    const dateKey = byDayKey[dayLabel];
-    if (daySummaries[dateKey]?.summary) continue; // already cached
-    fetchDaySummary(dateKey).then(d => {
-      const el = document.getElementById(`entry-${dateKey}`);
-      if (el && d?.summary) {
-        el.innerHTML = `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text">${d.summary}</div>`;
-      } else if (el) {
-        el.innerHTML = `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text diary-generating">Could not generate. <button onclick="regenerateDay('${dateKey}')">Retry</button></div>`;
+  // Load summaries sequentially in background (one at a time so Ollama doesn't choke)
+  (async () => {
+    for (const [dayLabel, entries] of dayEntries) {
+      const dateKey = byDayKey[dayLabel];
+      if (daySummaries[dateKey]?.summary) {
+        // Already cached — update DOM
+        const el = document.getElementById(`entry-${dateKey}`);
+        if (el) el.innerHTML = `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text">${daySummaries[dateKey].summary}</div>`;
+        continue;
       }
-    });
-  }
+      try {
+        const r = await fetch(`/day-summary?date=${dateKey}`);
+        const d = await r.json();
+        const el = document.getElementById(`entry-${dateKey}`);
+        if (d && d.summary && el) {
+          daySummaries[dateKey] = d;
+          el.innerHTML = `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text">${d.summary}</div>`;
+        } else if (el) {
+          el.innerHTML = `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text diary-generating">Could not generate. <button onclick="regenerateDay('${dateKey}')">Retry</button></div>`;
+        }
+      } catch(e) {
+        console.error('Day summary fetch error:', dateKey, e);
+      }
+    }
+  })();
 }
 
 // ===== INIT =====
