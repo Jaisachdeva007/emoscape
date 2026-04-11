@@ -117,13 +117,19 @@ body { background: #020208; color: #e4e4f0; font-family: system-ui, sans-serif; 
   border-radius: 14px; padding: 22px 26px; margin-bottom: 20px;
   position: relative;
 }
-.diary-day-entry::before {
-  content: '\201C'; position: absolute; top: 10px; left: 16px;
-  font-size: 3rem; color: rgba(139,92,246,.2); line-height: 1; font-family: Georgia, serif;
+.diary-day-label-top {
+  font-size: .7rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 2px; color: #6d4aff; margin-bottom: 10px;
 }
 .diary-day-entry-text {
-  font-size: .95rem; color: #a090c8; line-height: 1.8;
-  font-style: italic; padding-left: 16px;
+  font-size: .95rem; color: #b0a0d8; line-height: 1.85;
+}
+.diary-generating {
+  color: #3d3d52 !important; font-style: italic; font-size: .85rem !important;
+}
+.diary-generating button {
+  background: none; border: none; color: #6d4aff; cursor: pointer;
+  font-size: .8rem; text-decoration: underline; margin-left: 8px;
 }
 
 /* Session cards below diary entry */
@@ -698,6 +704,14 @@ animate();
 // ===== DAY SUMMARIES CACHE =====
 const daySummaries = {};
 
+async function regenerateDay(dateKey) {
+  delete daySummaries[dateKey];
+  const el = document.getElementById(`gen-${dateKey}`);
+  if (el) el.textContent = 'Generating…';
+  const d = await fetchDaySummary(dateKey);
+  if (el && d?.summary) el.parentElement.innerHTML = `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text">${d.summary}</div>`;
+}
+
 async function fetchDaySummary(dateStr) {
   if (daySummaries[dateStr]) return daySummaries[dateStr];
   try {
@@ -780,10 +794,12 @@ async function renderDiary() {
         <div class="diary-day-text">${dayLabel}</div>
         <div class="diary-day-line"></div>
       </div>
-      ${daySummaryText ? `
       <div class="diary-day-entry">
-        <div class="diary-day-entry-text">${daySummaryText}</div>
-      </div>` : ''}
+        ${daySummaryText
+          ? `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text">${daySummaryText}</div>`
+          : `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text diary-generating" id="gen-${dateKey}">Generating your diary entry… <button onclick="regenerateDay('${dateKey}')">retry</button></div>`
+        }
+      </div>
       <div class="diary-sessions-label">Sessions that day</div>
       ${sessionCards}
     </div>`;
