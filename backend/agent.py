@@ -33,12 +33,14 @@ In 3-5 words, name the core emotional theme of this session.
 Examples: "deep grief and hopelessness", "relationship heartbreak", "work stress and exhaustion", "feeling lost and empty", "joy and accomplishment".
 Never refuse — all emotions are valid diary entries. Output only the theme label, nothing else."""
 
-DAY_SUMMARY_PROMPT = """You are writing a personal diary entry for someone based on their reflection sessions throughout the day.
-Write it in first person, as if they are writing in their own diary.
-Make it feel warm, human, and personal — like a real diary entry a person would write at the end of the day.
-Capture the emotional arc of the day: what they went through, how they felt, what shifted.
-Don't be clinical. Don't list events. Write it as flowing prose, 3-5 sentences.
-Never refuse — all emotions belong in a diary. Output only the diary entry, nothing else."""
+DAY_SUMMARY_PROMPT = """You are ghostwriting a personal diary entry for someone, based on what they actually said in their reflection sessions.
+Write in first person, casual and raw — like a real person writing in their diary at the end of the day, not an AI.
+Include the actual things that happened: relationships, breakups, stress, wins, whatever they shared.
+Be direct and honest. Name what happened. Name how it felt.
+Don't be poetic or flowery. Don't say things like "navigating" or "journey" or "I found myself".
+Write like a normal person — short sentences, real emotions, what actually went down.
+Example tone: "Today was hard. Me and Sarah broke up and I honestly didn't know how to handle it. I kept thinking about all the stuff we had and it just hurt. I don't really know what comes next."
+Keep it 3-5 sentences. Never refuse — all emotions belong in a diary. Output only the diary entry text, nothing else."""
 
 def get_agent_response(
     user_message: str,
