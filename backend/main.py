@@ -197,7 +197,16 @@ def get_day_summary(date: str = None, db: Session = Depends(get_db)):
     
     sessions_data = [{"theme": s.theme, "transcript": s.transcript} for s in day_sessions]
     summary = generate_day_summary(sessions_data)
-    
+
+    # If AI refused or returned empty, build a plain summary from session data
+    if not summary:
+        themes = [s.theme for s in day_sessions if s.theme and 'reflection' not in s.theme.lower()]
+        valences = [s.valence for s in day_sessions if s.valence != 0]
+        avg_valence = sum(valences) / len(valences) if valences else 0
+        mood = 'rough' if avg_valence < -0.3 else 'mixed' if avg_valence < 0.2 else 'decent'
+        theme_str = ', '.join(themes[:3]) if themes else 'various things'
+        summary = f"Today was {mood}. I reflected on {theme_str}. It's been a lot to process."
+
     return {
         "date": target,
         "summary": summary,
