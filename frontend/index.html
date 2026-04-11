@@ -111,6 +111,42 @@ body { background: #020208; color: #e4e4f0; font-family: system-ui, sans-serif; 
   border-radius: 50px; padding: 3px 10px; color: #44445a;
 }
 
+/* Day diary entry (AI-generated prose) */
+.diary-day-entry {
+  background: rgba(139,92,246,.06); border: 1px solid rgba(139,92,246,.15);
+  border-radius: 14px; padding: 22px 26px; margin-bottom: 20px;
+  position: relative;
+}
+.diary-day-entry::before {
+  content: '\201C'; position: absolute; top: 10px; left: 16px;
+  font-size: 3rem; color: rgba(139,92,246,.2); line-height: 1; font-family: Georgia, serif;
+}
+.diary-day-entry-text {
+  font-size: .95rem; color: #a090c8; line-height: 1.8;
+  font-style: italic; padding-left: 16px;
+}
+
+/* Session cards below diary entry */
+.diary-sessions-label {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 2px; color: #2a2a3e; margin-bottom: 10px; padding-left: 2px;
+}
+.diary-session-card {
+  display: flex; align-items: stretch; gap: 0;
+  background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.05);
+  border-radius: 10px; margin-bottom: 8px; overflow: hidden; transition: all .2s;
+}
+.diary-session-card:hover { border-color: rgba(255,255,255,.1); }
+.dsc-left { width: 3px; flex-shrink: 0; opacity: .7; }
+.dsc-body { padding: 12px 16px; flex: 1; }
+.dsc-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.dsc-theme { font-size: .85rem; font-weight: 600; color: #c4c4d8; }
+.dsc-badge {
+  font-size: .68rem; font-weight: 600; padding: 3px 8px;
+  border-radius: 50px; white-space: nowrap; flex-shrink: 0;
+}
+.dsc-time { font-size: .75rem; color: #38384e; }
+
 .diary-empty {
   text-align: center; padding: 100px 0;
   color: #2d2d42; font-size: 1rem; line-height: 2;
@@ -532,7 +568,7 @@ function showDiary() {
   document.getElementById('btn-diary').classList.add('active');
   document.getElementById('btn-landscape').classList.remove('active');
   document.getElementById('btn-reflect').classList.remove('active');
-  renderDiary();
+  renderDiary(); // async
 }
 function showReflect() {
   document.getElementById('reflect-panel').classList.add('open');
@@ -659,6 +695,19 @@ function animate() {
 }
 animate();
 
+// ===== DAY SUMMARIES CACHE =====
+const daySummaries = {};
+
+async function fetchDaySummary(dateStr) {
+  if (daySummaries[dateStr]) return daySummaries[dateStr];
+  try {
+    const r = await fetch(`/day-summary?date=${dateStr}`);
+    const d = await r.json();
+    daySummaries[dateStr] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
 // ===== DIARY =====
 function emotionInfo(v, a) {
   if (v < -0.3 && a > 0.5) return { label:'Stressed',    bg:'rgba(239,68,68,.15)',  border:'rgba(239,68,68,.3)',  text:'#fca5a5' };
@@ -672,7 +721,7 @@ function sessionColorHex(s) {
   return '#' + sessionColor(s).getHexString();
 }
 
-function renderDiary() {
+async function renderDiary() {
   const container = document.getElementById('diary-entries');
   const streak = document.getElementById('diary-streak');
 
@@ -682,52 +731,65 @@ function renderDiary() {
     return;
   }
 
-  // Streak count
   const days = new Set(sessions.map(s => new Date(s.created_at).toDateString()));
   streak.innerHTML = `🔥 ${days.size} day${days.size!==1?'s':''} of reflection &nbsp;&middot;&nbsp; ${sessions.length} session${sessions.length!==1?'s':''} total`;
 
-  // Group by date, newest first
+  // Group by date key (YYYY-MM-DD), newest first
   const byDay = {};
+  const byDayKey = {};
   sessions.slice().reverse().forEach(s => {
     const d = new Date(s.created_at);
-    const key = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-    if (!byDay[key]) byDay[key] = [];
-    byDay[key].push(s);
+    const dateKey = d.toISOString().split('T')[0];
+    const label = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    if (!byDay[label]) { byDay[label] = []; byDayKey[label] = dateKey; }
+    byDay[label].push(s);
   });
 
-  container.innerHTML = Object.entries(byDay).map(([day, entries]) => `
+  // Show loading state
+  container.innerHTML = '<div class="diary-empty">Generating your diary…</div>';
+
+  // Build HTML with day summaries
+  const dayHtmlParts = await Promise.all(Object.entries(byDay).map(async ([dayLabel, entries]) => {
+    const dateKey = byDayKey[dayLabel];
+    const daySummaryData = await fetchDaySummary(dateKey);
+    const daySummaryText = daySummaryData?.summary || '';
+
+    const sessionCards = entries.map(s => {
+      const d = new Date(s.created_at);
+      const time = d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
+      const col = sessionColorHex(s);
+      const info = emotionInfo(s.valence, s.arousal);
+      const mins = s.duration_seconds ? Math.round(s.duration_seconds/60) : 0;
+      return `
+      <div class="diary-session-card">
+        <div class="dsc-left" style="background:${col}"></div>
+        <div class="dsc-body">
+          <div class="dsc-top">
+            <span class="dsc-theme">${s.theme || 'Reflection'}</span>
+            <span class="dsc-badge" style="background:${info.bg};border:1px solid ${info.border};color:${info.text}">${info.label}</span>
+          </div>
+          <div class="dsc-time">${time}${mins?' · '+mins+' min':''}${s.word_count?' · '+s.word_count+' words':''}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `
     <div class="diary-day">
       <div class="diary-day-label">
         <div class="diary-day-line"></div>
-        <div class="diary-day-text">${day}</div>
+        <div class="diary-day-text">${dayLabel}</div>
         <div class="diary-day-line"></div>
       </div>
-      ${entries.map(s => {
-        const d = new Date(s.created_at);
-        const time = d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
-        const col = sessionColorHex(s);
-        const info = emotionInfo(s.valence, s.arousal);
-        const mins = s.duration_seconds ? Math.round(s.duration_seconds/60) : 0;
-        return `
-        <div class="diary-entry">
-          <div class="diary-entry-accent" style="background:linear-gradient(90deg,${col},transparent)"></div>
-          <div class="diary-entry-body">
-            <div class="diary-entry-top">
-              <div class="diary-entry-theme">${s.theme || 'Reflection'}</div>
-              <div class="diary-emotion-badge" style="background:${info.bg};border:1px solid ${info.border};color:${info.text}">${info.label}</div>
-            </div>
-            <div class="diary-entry-time">${time}${mins ? ' &nbsp;&middot;&nbsp; ' + mins + ' min' : ''}${s.word_count ? ' &nbsp;&middot;&nbsp; ' + s.word_count + ' words' : ''}</div>
-            <div class="diary-entry-summary">${s.summary || 'Session recorded.'}</div>
-            <div class="diary-entry-footer">
-              <span class="diary-pill">valence ${s.valence>0?'+':''}${s.valence.toFixed(2)}</span>
-              <span class="diary-pill">arousal ${(s.arousal*100).toFixed(0)}%</span>
-              <span class="diary-pill">intensity ${(s.intensity*100).toFixed(0)}%</span>
-            </div>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-  `).join('');
+      ${daySummaryText ? `
+      <div class="diary-day-entry">
+        <div class="diary-day-entry-text">${daySummaryText}</div>
+      </div>` : ''}
+      <div class="diary-sessions-label">Sessions that day</div>
+      ${sessionCards}
+    </div>`;
+  }));
+
+  container.innerHTML = dayHtmlParts.join('');
 }
 
 // ===== INIT =====

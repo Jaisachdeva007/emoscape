@@ -33,6 +33,13 @@ In 3-5 words, name the core emotional theme of this session.
 Examples: "deep grief and hopelessness", "relationship heartbreak", "work stress and exhaustion", "feeling lost and empty", "joy and accomplishment".
 Never refuse — all emotions are valid diary entries. Output only the theme label, nothing else."""
 
+DAY_SUMMARY_PROMPT = """You are writing a personal diary entry for someone based on their reflection sessions throughout the day.
+Write it in first person, as if they are writing in their own diary.
+Make it feel warm, human, and personal — like a real diary entry a person would write at the end of the day.
+Capture the emotional arc of the day: what they went through, how they felt, what shifted.
+Don't be clinical. Don't list events. Write it as flowing prose, 3-5 sentences.
+Never refuse — all emotions belong in a diary. Output only the diary entry, nothing else."""
+
 def get_agent_response(
     user_message: str,
     conversation_history: List[Dict],
@@ -92,3 +99,28 @@ def generate_session_theme(transcript: str) -> str:
         return response['message']['content'].strip()[:100]
     except Exception:
         return "reflection"
+
+def generate_day_summary(sessions_data: list) -> str:
+    """Generate a single diary entry for an entire day from multiple sessions."""
+    if not sessions_data:
+        return ""
+    # Build context from all sessions
+    context = "\n\n".join([
+        f"Session {i+1} ({s.get('theme','')}):\n{s.get('transcript','')[:500]}"
+        for i, s in enumerate(sessions_data)
+        if s.get('transcript')
+    ])
+    if not context.strip():
+        return ""
+    try:
+        response = ollama.chat(
+            model="llama3.2",
+            messages=[
+                {"role": "system", "content": DAY_SUMMARY_PROMPT},
+                {"role": "user", "content": f"Here are all my reflection sessions from today:\n\n{context}\n\nWrite my diary entry for today."}
+            ],
+            options={"temperature": 0.7}
+        )
+        return response['message']['content'].strip()
+    except Exception:
+        return ""

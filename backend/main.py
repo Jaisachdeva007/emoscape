@@ -13,7 +13,7 @@ import os
 
 from database import init_db, get_db, ReflectionSession, Utterance
 from pipeline import extract_session_features, get_valence
-from agent import get_agent_response, generate_session_summary, generate_session_theme
+from agent import get_agent_response, generate_session_summary, generate_session_theme, generate_day_summary
 
 app = FastAPI(title="EmoScape API", version="1.0.0")
 
@@ -176,6 +176,32 @@ def get_utterances(session_id: int, db: Session = Depends(get_db)):
         Utterance.session_id == session_id
     ).order_by(Utterance.created_at).all()
     return [{"speaker": u.speaker, "text": u.text, "valence": u.valence} for u in utterances]
+
+@app.get("/day-summary")
+def get_day_summary(date: str = None, db: Session = Depends(get_db)):
+    """Get or generate a diary summary for a given date (YYYY-MM-DD). Defaults to today."""
+    from datetime import date as date_type
+    target = date or str(date_type.today())
+    
+    # Get all sessions for that day
+    all_sessions = db.query(ReflectionSession).order_by(ReflectionSession.created_at).all()
+    day_sessions = [
+        s for s in all_sessions
+        if s.created_at.strftime('%Y-%m-%d') == target and s.transcript
+    ]
+    
+    if not day_sessions:
+        return {"date": target, "summary": "", "session_count": 0}
+    
+    sessions_data = [{"theme": s.theme, "transcript": s.transcript} for s in day_sessions]
+    summary = generate_day_summary(sessions_data)
+    
+    return {
+        "date": target,
+        "summary": summary,
+        "session_count": len(day_sessions),
+        "themes": [s.theme for s in day_sessions if s.theme]
+    }
 
 @app.get("/health")
 def health():
