@@ -227,8 +227,9 @@ async def tts(text: str, voice: str = "en-US-JennyNeural"):
     try:
         with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as f:
             tmpfile = f.name
+        edge_tts_bin = '/Users/jsachdeva/.openclaw/workspace/instagram-venv/bin/edge-tts'
         proc = await asyncio.create_subprocess_exec(
-            'edge-tts', '--voice', voice, '--text', text, '--write-media', tmpfile,
+            edge_tts_bin, '--voice', voice, '--text', text, '--write-media', tmpfile,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         await proc.wait()
