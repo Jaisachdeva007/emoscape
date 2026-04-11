@@ -148,7 +148,7 @@ scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({color:0x3d3080,size:0
 
 // ===== LOAD AVATAR =====
 // Using a public RPM avatar URL
-const AVATAR_URL = 'https://models.readyplayer.me/638df693d72bffc6fa17943c.glb?morphTargets=ARKit';
+const AVATAR_URL = '/static/avatar.glb';
 
 function loadAvatar() {
   const loader = new THREE.GLTFLoader();
@@ -343,17 +343,29 @@ async function agentSpeak(text) {
   isSpeaking = true;
   document.getElementById('mic-btn').className = 'speaking';
   document.getElementById('mic-btn').textContent = '🔊';
-  try {
-    const url = '/tts?voice=en-US-JennyNeural&text=' + encodeURIComponent(text.slice(0,300));
-    const audio = new Audio(url);
-    await new Promise((res,rej) => { audio.onended=res; audio.onerror=rej; audio.play(); });
-  } catch(e) {
-    await new Promise(r=>setTimeout(r, Math.min(text.length*45, 4000)));
-  }
+  await speakWithBrowser(text);
   isSpeaking = false;
   document.getElementById('mic-btn').className = '';
   document.getElementById('mic-btn').textContent = '🎤';
   setStatus('Click mic to speak');
+}
+
+function speakWithBrowser(text) {
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis) { setTimeout(resolve, text.length*40); return; }
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    // Pick a good voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v => v.name.includes('Samantha') || v.name.includes('Karen') || v.name.includes('Jenny') || (v.lang === 'en-US' && v.localService));
+    if (preferred) utt.voice = preferred;
+    utt.rate = 0.92;
+    utt.pitch = 1.05;
+    utt.volume = 1;
+    utt.onend = resolve;
+    utt.onerror = resolve;
+    window.speechSynthesis.speak(utt);
+  });
 }
 
 async function endSession() {
