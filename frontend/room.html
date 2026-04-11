@@ -102,8 +102,8 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x060614, 6, 20);
 
 const camera = new THREE.PerspectiveCamera(40, window.innerWidth/window.innerHeight, 0.1, 100);
-camera.position.set(0, 1.6, 2.2);
-camera.lookAt(0, 1.55, 0);
+camera.position.set(0, 1.6, 2.5);
+camera.lookAt(0, 1.4, 0);
 
 // Lighting
 scene.add(new THREE.AmbientLight(0x8080b0, 1.2));
@@ -159,6 +159,7 @@ function loadAvatar() {
       const avatar = gltf.scene;
       avatar.scale.set(1,1,1);
       avatar.position.set(0,0,0);
+      avatar.rotation.y = Math.PI; // face the camera
       avatar.traverse(n => {
         n.castShadow = true;
         n.receiveShadow = true;
