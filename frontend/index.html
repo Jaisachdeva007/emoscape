@@ -786,12 +786,10 @@ async function renderDiary() {
   // Show loading state
   container.innerHTML = '<div class="diary-empty">Generating your diary…</div>';
 
-  // Build HTML with day summaries
-  const dayHtmlParts = await Promise.all(Object.entries(byDay).map(async ([dayLabel, entries]) => {
+  // Build HTML immediately with session cards, then load summaries async
+  const dayEntries = Object.entries(byDay);
+  container.innerHTML = dayEntries.map(([dayLabel, entries]) => {
     const dateKey = byDayKey[dayLabel];
-    const daySummaryData = await fetchDaySummary(dateKey);
-    const daySummaryText = daySummaryData?.summary || '';
-
     const sessionCards = entries.map(s => {
       const d = new Date(s.created_at);
       const time = d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
@@ -811,6 +809,12 @@ async function renderDiary() {
       </div>`;
     }).join('');
 
+    // Check cache first
+    const cached = daySummaries[dateKey];
+    const summaryHtml = cached?.summary
+      ? `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text">${cached.summary}</div>`
+      : `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text diary-generating" id="gen-${dateKey}">Writing your diary entry…</div>`;
+
     return `
     <div class="diary-day">
       <div class="diary-day-label">
@@ -818,18 +822,25 @@ async function renderDiary() {
         <div class="diary-day-text">${dayLabel}</div>
         <div class="diary-day-line"></div>
       </div>
-      <div class="diary-day-entry">
-        ${daySummaryText
-          ? `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text">${daySummaryText}</div>`
-          : `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text diary-generating" id="gen-${dateKey}">Generating your diary entry… <button onclick="regenerateDay('${dateKey}')">retry</button></div>`
-        }
-      </div>
+      <div class="diary-day-entry" id="entry-${dateKey}">${summaryHtml}</div>
       <div class="diary-sessions-label">Sessions that day</div>
       ${sessionCards}
     </div>`;
-  }));
+  }).join('');
 
-  container.innerHTML = dayHtmlParts.join('');
+  // Now load summaries one at a time in background
+  for (const [dayLabel, entries] of dayEntries) {
+    const dateKey = byDayKey[dayLabel];
+    if (daySummaries[dateKey]?.summary) continue; // already cached
+    fetchDaySummary(dateKey).then(d => {
+      const el = document.getElementById(`entry-${dateKey}`);
+      if (el && d?.summary) {
+        el.innerHTML = `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text">${d.summary}</div>`;
+      } else if (el) {
+        el.innerHTML = `<div class="diary-day-label-top">My Day</div><div class="diary-day-entry-text diary-generating">Could not generate. <button onclick="regenerateDay('${dateKey}')">Retry</button></div>`;
+      }
+    });
+  }
 }
 
 // ===== INIT =====
