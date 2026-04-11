@@ -107,7 +107,6 @@ def generate_day_summary(sessions_data: list) -> str:
     """Generate a single diary entry for an entire day from multiple sessions."""
     if not sessions_data:
         return ""
-    # Build context from all sessions
     context = "\n\n".join([
         f"Session {i+1} ({s.get('theme','')}):\n{s.get('transcript','')[:500]}"
         for i, s in enumerate(sessions_data)
@@ -115,15 +114,22 @@ def generate_day_summary(sessions_data: list) -> str:
     ])
     if not context.strip():
         return ""
-    try:
-        response = ollama.chat(
-            model="llama3.2",
-            messages=[
-                {"role": "system", "content": DAY_SUMMARY_PROMPT},
-                {"role": "user", "content": f"Here are all my reflection sessions from today:\n\n{context}\n\nWrite my diary entry for today."}
-            ],
-            options={"temperature": 0.7}
-        )
-        return response['message']['content'].strip()
-    except Exception:
-        return ""
+    # Try mistral first (no safety refusals), fall back to llama3.2
+    for model in ["mistral", "llama3.2"]:
+        try:
+            response = ollama.chat(
+                model=model,
+                messages=[
+                    {"role": "system", "content": DAY_SUMMARY_PROMPT},
+                    {"role": "user", "content": f"Here are all my reflection sessions from today:\n\n{context}\n\nWrite my diary entry for today."}
+                ],
+                options={"temperature": 0.7}
+            )
+            result = response['message']['content'].strip()
+            # If model refused, try next
+            if 'cannot write' in result.lower() or 'i cannot' in result.lower() or 'self-harm' in result.lower():
+                continue
+            return result
+        except Exception:
+            continue
+    return ""
