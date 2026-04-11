@@ -13,16 +13,43 @@ def get_valence(text: str) -> float:
 
 def estimate_articulation_rate(text: str, duration_seconds: float) -> float:
     """
-    Estimate arousal via articulation rate (syllables / phonation time).
-    Normalized to 0-1 range based on typical speech rates (2-6 syllables/sec).
+    Estimate arousal from text features: exclamation marks, question intensity,
+    word length variance, and syllable density. More expressive = higher arousal.
     """
-    if duration_seconds <= 0:
+    if not text.strip():
         return 0.5
-    syllable_count = count_syllables(text)
-    rate = syllable_count / duration_seconds
-    # Normal speech: 2-6 syllables/sec → normalize to 0-1
-    normalized = (rate - 2.0) / 4.0
-    return float(max(0.0, min(1.0, normalized)))
+
+    words = text.split()
+    word_count = len(words)
+    if word_count == 0:
+        return 0.5
+
+    # Exclamation and question marks suggest activation
+    exclaim = text.count('!') * 0.15
+    questions = text.count('?') * 0.08
+
+    # Caps words suggest emphasis
+    caps_ratio = sum(1 for w in words if w.isupper() and len(w) > 1) / max(word_count, 1)
+
+    # High emotion words
+    high_arousal_words = {'stressed','anxious','excited','overwhelmed','angry','frustrated',
+                          'terrified','amazing','incredible','exhausted','panicking','urgent',
+                          'cant','cannot','never','always','everything','nothing','worst','best'}
+    arousal_hits = sum(1 for w in words if w.lower().strip('!?,. ') in high_arousal_words)
+    word_arousal = min(arousal_hits / max(word_count, 1) * 5, 1.0)
+
+    # Sentence length variance (choppy = more activated)
+    sentences = [s.strip() for s in re.split(r'[.!?]', text) if s.strip()]
+    if len(sentences) > 1:
+        lengths = [len(s.split()) for s in sentences]
+        avg = sum(lengths)/len(lengths)
+        variance = sum((l-avg)**2 for l in lengths)/len(lengths)
+        choppiness = min(variance / 50, 1.0)
+    else:
+        choppiness = 0.3
+
+    score = (exclaim + questions + caps_ratio * 0.5 + word_arousal * 0.4 + choppiness * 0.2)
+    return float(max(0.05, min(0.95, score)))
 
 def count_syllables(text: str) -> int:
     """Estimate syllable count using vowel nuclei detection."""

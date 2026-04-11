@@ -300,9 +300,21 @@ function updateCam() {
 const splineGroup = new THREE.Group();
 scene.add(splineGroup);
 
-function arousalColor(a) {
-  const r = a*239+(1-a)*59, g=(1-a)*60, b=(1-a)*246+a*68;
-  return new THREE.Color(r/255,g/255,b/255);
+function sessionColor(s) {
+  // Blend valence + arousal for richer color
+  // negative+high arousal = red, negative+low = deep blue, positive+high = orange/yellow, positive+low = teal/green
+  const v = (s.valence + 1) / 2;   // 0-1, 0=negative, 1=positive
+  const a = s.arousal;              // 0-1, 0=calm, 1=activated
+
+  // Four color poles
+  const negHigh = new THREE.Color(0xef4444); // red — stressed
+  const negLow  = new THREE.Color(0x4338ca); // indigo — depleted
+  const posHigh = new THREE.Color(0xf59e0b); // amber — energized
+  const posLow  = new THREE.Color(0x06b6d4); // cyan — peaceful
+
+  const negBlend = negLow.clone().lerp(negHigh, a);
+  const posBlend = posLow.clone().lerp(posHigh, a);
+  return negBlend.lerp(posBlend, v);
 }
 
 function buildSpline(data) {
@@ -326,7 +338,7 @@ function buildSpline(data) {
       const seg = new THREE.CatmullRomCurve3(segPts);
       const thick = 0.04+data[i].intensity*0.18;
       const geo = new THREE.TubeGeometry(seg, 24, thick, 8, false);
-      const col = arousalColor(data[i].arousal);
+      const col = sessionColor(data[i]);
       const mat = new THREE.MeshPhongMaterial({
         color: col, emissive: col, emissiveIntensity:0.5,
         transparent:true, opacity:0.9, shininess:60
@@ -342,7 +354,7 @@ function buildSpline(data) {
 
   data.forEach((s,i) => {
     const pos = pts[i];
-    const col = arousalColor(s.arousal);
+    const col = sessionColor(s);
     const size = 0.22+s.intensity*0.18;
 
     // Core node
