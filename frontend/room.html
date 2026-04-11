@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EmoScape — Session Room</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#04040e; color:#e4e4f0; font-family:system-ui,sans-serif; overflow:hidden; height:100vh; }
+#canvas { width:100vw; height:100vh; display:block; position:fixed; top:0; left:0; }
+
+/* HUD */
+#hud {
+  position:fixed; bottom:0; left:0; right:0; z-index:100;
+  padding:24px 32px;
+  background:linear-gradient(to top, rgba(4,4,14,.95) 60%, transparent);
+}
+#hud-inner { max-width:700px; margin:0 auto; }
+
+/* Transcript */
+#transcript {
+  min-height:80px; max-height:160px; overflow-y:auto;
+  margin-bottom:16px; padding:0 4px;
+  scrollbar-width:thin; scrollbar-color:rgba(139,92,246,.2) transparent;
+}
+.line { font-size:.9rem; line-height:1.6; margin-bottom:6px; animation:fadeUp .3s ease; }
+.line.agent { color:#c4b5fd; }
+.line.agent::before { content:'✦ '; opacity:.5; }
+.line.user { color:#6b6b8e; font-style:italic; }
+.line.user::before { content:'you · '; opacity:.4; font-style:normal; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+/* Controls */
+#controls { display:flex; gap:12px; align-items:center; }
+#mic-btn {
+  width:56px; height:56px; border-radius:50%;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);
+  border:none; cursor:pointer; font-size:1.4rem;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .3s; flex-shrink:0;
+  box-shadow:0 4px 20px rgba(99,102,241,.4);
+}
+#mic-btn.listening {
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  animation:pulse-ring 1.5s infinite;
+  box-shadow:0 4px 20px rgba(239,68,68,.5);
+}
+#mic-btn.speaking {
+  background:linear-gradient(135deg,#059669,#10b981);
+  box-shadow:0 4px 20px rgba(16,185,129,.4);
+}
+@keyframes pulse-ring {
+  0%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}
+  70%{box-shadow:0 0 0 16px rgba(239,68,68,0)}
+  100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}
+}
+#status-text { flex:1; font-size:.85rem; color:#4a4a6a; }
+#end-btn {
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+  border-radius:8px; padding:10px 18px; color:#5a5a72;
+  cursor:pointer; font-size:.82rem; transition:all .2s;
+}
+#end-btn:hover { color:#e4e4f0; border-color:rgba(255,255,255,.2); }
+#back-btn {
+  position:fixed; top:20px; left:20px; z-index:200;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+  border-radius:8px; padding:8px 16px; color:#5a5a72;
+  cursor:pointer; font-size:.82rem; text-decoration:none;
+  transition:all .2s;
+}
+#back-btn:hover { color:#e4e4f0; }
+
+/* Avatar speaking indicator */
+#avatar-status {
+  position:fixed; top:20px; left:50%; transform:translateX(-50%);
+  background:rgba(10,10,30,.8); backdrop-filter:blur(12px);
+  border:1px solid rgba(139,92,246,.2); border-radius:50px;
+  padding:8px 20px; font-size:.8rem; color:#a78bfa;
+  display:none; align-items:center; gap:8px; z-index:200;
+}
+.speaking-dots span {
+  display:inline-block; width:5px; height:5px; border-radius:50%;
+  background:#a78bfa; animation:dot-bounce .8s infinite;
+  margin:0 2px;
+}
+.speaking-dots span:nth-child(2){animation-delay:.15s}
+.speaking-dots span:nth-child(3){animation-delay:.3s}
+@keyframes dot-bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<a href="/" id="back-btn">← Landscape</a>
+
+<div id="avatar-status">
+  <span>Speaking</span>
+  <div class="speaking-dots"><span></span><span></span><span></span></div>
+</div>
+
+<div id="hud">
+  <div id="hud-inner">
+    <div id="transcript"></div>
+    <div id="controls">
+      <button id="mic-btn" onclick="toggleMic()" title="Hold to speak">🎤</button>
+      <div id="status-text">Click mic to speak</div>
+      <button id="end-btn" onclick="endSession()">End Session</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+// ===== STATE =====
+let sessionId = null, sessionStart = null, turnCount = 0;
+let isListening = false, isSpeaking = false;
+let recognition = null;
+let avatarMixer = null, avatarModel = null;
+let blinkTime = 0, breatheTime = 0;
+let mouthBone = null, headBone = null, neckBone = null;
+let speakInterval = null;
+let currentAudio = null;
+
+// ===== THREE.JS SETUP =====
+const canvas = document.getElementById('canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x04040e);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x04040e, 8, 25);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 1.55, 2.8);
+camera.lookAt(0, 1.5, 0);
+
+// ===== LIGHTING =====
+scene.add(new THREE.AmbientLight(0x1a1a3e, 2));
+const keyLight = new THREE.DirectionalLight(0xd4c8ff, 3);
+keyLight.position.set(2, 4, 3);
+keyLight.castShadow = true;
+scene.add(keyLight);
+const fillLight = new THREE.PointLight(0x6366f1, 2, 8);
+fillLight.position.set(-2, 2, 1);
+scene.add(fillLight);
+const rimLight = new THREE.PointLight(0x8b5cf6, 1.5, 6);
+rimLight.position.set(0, 3, -2);
+scene.add(rimLight);
+
+// ===== ENVIRONMENT =====
+// Floor
+const floorGeo = new THREE.CircleGeometry(6, 64);
+const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a18, roughness: 0.8 });
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// Ambient particles
+const pGeo = new THREE.BufferGeometry();
+const pVerts = new Float32Array(800 * 3);
+for (let i = 0; i < 800; i++) {
+  pVerts[i*3]   = (Math.random()-0.5)*12;
+  pVerts[i*3+1] = Math.random()*5;
+  pVerts[i*3+2] = (Math.random()-0.5)*12;
+}
+pGeo.setAttribute('position', new THREE.Float32BufferAttribute(pVerts, 3));
+scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({ color:0x4a3880, size:0.03, transparent:true, opacity:0.6 })));
+
+// Ground glow ring
+const ringGeo = new THREE.RingGeometry(0.4, 1.2, 64);
+const ringMat = new THREE.MeshBasicMaterial({ color:0x6366f1, transparent:true, opacity:0.08, side:THREE.DoubleSide });
+const ring = new THREE.Mesh(ringGeo, ringMat);
+ring.rotation.x = -Math.PI/2;
+ring.position.y = 0.01;
+scene.add(ring);
+
+// ===== BUILD HUMANOID AVATAR =====
+function buildAvatar() {
+  const group = new THREE.Group();
+
+  const skin = new THREE.MeshStandardMaterial({ color:0xfdd5b1, roughness:0.6 });
+  const hair = new THREE.MeshStandardMaterial({ color:0x2c1810, roughness:0.8 });
+  const shirt = new THREE.MeshStandardMaterial({ color:0x3730a3, roughness:0.7 });
+  const pants = new THREE.MeshStandardMaterial({ color:0x1e1b4b, roughness:0.7 });
+  const eyes = new THREE.MeshStandardMaterial({ color:0x1a3a5c, roughness:0.3 });
+  const white = new THREE.MeshStandardMaterial({ color:0xffffff, roughness:0.4 });
+  const lip = new THREE.MeshStandardMaterial({ color:0xc87070, roughness:0.5 });
+
+  function mesh(geo, mat) {
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = true;
+    return m;
+  }
+
+  // Body
+  const torso = mesh(new THREE.CapsuleGeometry(0.22, 0.5, 8, 16), shirt);
+  torso.position.y = 1.05;
+  group.add(torso);
+
+  // Hips
+  const hips = mesh(new THREE.CapsuleGeometry(0.2, 0.15, 8, 16), pants);
+  hips.position.y = 0.72;
+  group.add(hips);
+
+  // Legs
+  [-0.1, 0.1].forEach(x => {
+    const leg = mesh(new THREE.CapsuleGeometry(0.09, 0.55, 8, 16), pants);
+    leg.position.set(x, 0.3, 0);
+    group.add(leg);
+    const foot = mesh(new THREE.BoxGeometry(0.1, 0.06, 0.18), new THREE.MeshStandardMaterial({ color:0x1a1a2e }));
+    foot.position.set(x, 0.02, 0.04);
+    group.add(foot);
+  });
+
+  // Arms
+  [-0.35, 0.35].forEach(x => {
+    const arm = mesh(new THREE.CapsuleGeometry(0.07, 0.42, 8, 16), shirt);
+    arm.position.set(x, 1.05, 0);
+    arm.rotation.z = x < 0 ? 0.15 : -0.15;
+    group.add(arm);
+    const hand = mesh(new THREE.SphereGeometry(0.07, 8, 8), skin);
+    hand.position.set(x < 0 ? -0.38 : 0.38, 0.78, 0);
+    group.add(hand);
+  });
+
+  // Neck
+  const neck = mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.18, 12), skin);
+  neck.position.y = 1.42;
+  group.add(neck);
+
+  // Head
+  const headGroup = new THREE.Group();
+  headGroup.position.y = 1.6;
+  group.add(headGroup);
+  headBone = headGroup;
+
+  const head = mesh(new THREE.SphereGeometry(0.22, 32, 32), skin);
+  head.scale.y = 1.15;
+  headGroup.add(head);
+
+  // Hair
+  const hairTop = mesh(new THREE.SphereGeometry(0.23, 16, 16, 0, Math.PI*2, 0, Math.PI*0.55), hair);
+  hairTop.position.y = 0.06;
+  headGroup.add(hairTop);
+
+  // Eyes
+  [[-0.08, 0.04], [0.08, 0.04]].forEach(([x, y]) => {
+    const eyeWhite = mesh(new THREE.SphereGeometry(0.045, 12, 12), white);
+    eyeWhite.position.set(x, y, 0.18);
+    eyeWhite.scale.z = 0.5;
+    headGroup.add(eyeWhite);
+
+    const iris = mesh(new THREE.SphereGeometry(0.025, 10, 10), eyes);
+    iris.position.set(x, y, 0.22);
+    iris.scale.z = 0.3;
+    headGroup.add(iris);
+
+    const pupil = mesh(new THREE.SphereGeometry(0.012, 8, 8), new THREE.MeshBasicMaterial({ color:0x000000 }));
+    pupil.position.set(x, y, 0.235);
+    pupil.scale.z = 0.2;
+    headGroup.add(pupil);
+  });
+
+  // Eyebrows
+  [[-0.08, 0.1], [0.08, 0.1]].forEach(([x, y]) => {
+    const brow = mesh(new THREE.BoxGeometry(0.065, 0.012, 0.008), hair);
+    brow.position.set(x, y, 0.2);
+    brow.rotation.z = x < 0 ? 0.1 : -0.1;
+    headGroup.add(brow);
+  });
+
+  // Nose
+  const nose = mesh(new THREE.SphereGeometry(0.022, 8, 8), skin);
+  nose.position.set(0, -0.02, 0.215);
+  nose.scale.set(1, 0.7, 0.8);
+  headGroup.add(nose);
+
+  // Mouth
+  const mouthGroup = new THREE.Group();
+  mouthGroup.position.set(0, -0.08, 0.2);
+  headGroup.add(mouthGroup);
+  mouthBone = mouthGroup;
+
+  const upperLip = mesh(new THREE.BoxGeometry(0.09, 0.018, 0.01), lip);
+  upperLip.position.y = 0.01;
+  mouthGroup.add(upperLip);
+
+  const lowerLip = mesh(new THREE.BoxGeometry(0.09, 0.018, 0.01), lip);
+  lowerLip.position.y = -0.01;
+  mouthGroup.add(lowerLip);
+
+  // Ears
+  [-0.22, 0.22].forEach(x => {
+    const ear = mesh(new THREE.SphereGeometry(0.04, 8, 8), skin);
+    ear.position.set(x, 0, 0);
+    ear.scale.z = 0.5;
+    headGroup.add(ear);
+  });
+
+  group.position.y = 0;
+  scene.add(group);
+  avatarModel = group;
+
+  // Idle breathing animation
+  const clock = new THREE.Clock();
+  return group;
+}
+
+buildAvatar();
+
+// ===== ANIMATIONS =====
+const clock = new THREE.Clock();
+let t = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  t += delta;
+
+  // Breathing
+  if (avatarModel) {
+    avatarModel.scale.y = 1 + Math.sin(t * 0.8) * 0.006;
+    avatarModel.scale.x = 1 - Math.sin(t * 0.8) * 0.003;
+  }
+
+  // Head subtle sway
+  if (headBone) {
+    headBone.rotation.y = Math.sin(t * 0.4) * 0.04;
+    headBone.rotation.x = Math.sin(t * 0.3) * 0.02 - 0.05;
+  }
+
+  // Mouth animation when speaking
+  if (mouthBone && isSpeaking) {
+    const open = Math.abs(Math.sin(t * 12)) * 0.025;
+    mouthBone.children[1].position.y = -0.012 - open;
+  } else if (mouthBone) {
+    mouthBone.children[1].position.y = -0.012;
+  }
+
+  // Ground ring pulse
+  ring.material.opacity = 0.06 + Math.sin(t * 1.5) * 0.03;
+  if (isSpeaking) ring.material.opacity += 0.06;
+
+  // Fill light pulse when speaking
+  fillLight.intensity = isSpeaking ? 2 + Math.sin(t * 8) * 0.5 : 2;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// ===== SESSION =====
+async function startSession() {
+  const r = await fetch('/session/start', { method:'POST' });
+  const d = await r.json();
+  sessionId = d.session_id;
+  sessionStart = Date.now();
+  turnCount = 0;
+
+  // Avatar greets you
+  await agentSpeak("Hey. Good to see you. How's your day been so far?");
+}
+
+// ===== SPEECH RECOGNITION =====
+function setupRecognition() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    setStatus('Speech not supported — type below instead');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = (e) => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+    if (e.results[e.results.length-1].isFinal) {
+      stopListening();
+      sendMessage(transcript);
+    } else {
+      setStatus('🎤 ' + transcript);
+    }
+  };
+  recognition.onerror = () => stopListening();
+  recognition.onend = () => { if (isListening) stopListening(); };
+}
+
+function toggleMic() {
+  if (isSpeaking) return;
+  if (isListening) stopListening();
+  else startListening();
+}
+
+function startListening() {
+  if (!recognition) setupRecognition();
+  isListening = true;
+  document.getElementById('mic-btn').className = 'listening';
+  document.getElementById('mic-btn').textContent = '🔴';
+  setStatus('Listening… speak now');
+  recognition.start();
+}
+
+function stopListening() {
+  isListening = false;
+  document.getElementById('mic-btn').className = '';
+  document.getElementById('mic-btn').textContent = '🎤';
+  setStatus('Processing…');
+  try { recognition.stop(); } catch(e) {}
+}
+
+// ===== MESSAGING =====
+async function sendMessage(text) {
+  if (!text.trim() || !sessionId) return;
+  addLine('user', text);
+  turnCount++;
+  setStatus('Thinking…');
+
+  try {
+    const r = await fetch('/session/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ session_id: sessionId, text })
+    });
+    const d = await r.json();
+    await agentSpeak(d.reply);
+  } catch(e) {
+    setStatus('Error — try again');
+  }
+}
+
+async function agentSpeak(text) {
+  addLine('agent', text);
+  setStatus('');
+
+  // Show speaking indicator
+  isSpeaking = true;
+  document.getElementById('mic-btn').className = 'speaking';
+  document.getElementById('mic-btn').textContent = '🔊';
+  document.getElementById('avatar-status').style.display = 'flex';
+
+  try {
+    const url = '/tts?voice=en-US-JennyNeural&text=' + encodeURIComponent(text.slice(0, 300));
+    const audio = new Audio(url);
+    currentAudio = audio;
+    await new Promise((resolve, reject) => {
+      audio.onended = resolve;
+      audio.onerror = reject;
+      audio.play();
+    });
+  } catch(e) {
+    // TTS failed silently — text still shows
+    await new Promise(r => setTimeout(r, text.length * 40));
+  }
+
+  isSpeaking = false;
+  document.getElementById('mic-btn').className = '';
+  document.getElementById('mic-btn').textContent = '🎤';
+  document.getElementById('avatar-status').style.display = 'none';
+  setStatus('Click mic to speak');
+}
+
+async function endSession() {
+  if (!sessionId) return;
+  const dur = (Date.now() - sessionStart) / 1000;
+  await agentSpeak("It was good talking with you. Take care of yourself.");
+  await fetch('/session/end', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ session_id: sessionId, duration_seconds: dur, turn_count: turnCount })
+  });
+  setTimeout(() => { window.location.href = '/'; }, 2000);
+}
+
+// ===== UI =====
+function addLine(speaker, text) {
+  const div = document.createElement('div');
+  div.className = `line ${speaker}`;
+  div.textContent = text;
+  const t = document.getElementById('transcript');
+  t.appendChild(div);
+  t.scrollTop = t.scrollHeight;
+}
+
+function setStatus(msg) {
+  document.getElementById('status-text').textContent = msg;
+}
+
+// ===== RESIZE =====
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ===== INIT =====
+setupRecognition();
+startSession();
+</script>
+</body>
+</html>

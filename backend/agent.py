@@ -51,7 +51,6 @@ def get_agent_response(
     """Get a reflective response from the local LLM."""
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-    # Inject relevant past session context if available
     if past_session_summaries:
         context = "\n".join([f"- {s}" for s in past_session_summaries[-3:]])
         messages.append({
@@ -59,19 +58,20 @@ def get_agent_response(
             "content": f"Relevant past sessions for context:\n{context}\nUse this only if naturally relevant."
         })
 
-    # Add conversation history (last 10 turns)
     messages.extend(conversation_history[-10:])
     messages.append({"role": "user", "content": user_message})
 
-    try:
-        response = ollama.chat(
-            model="llama3.2",
-            messages=messages,
-            options={"temperature": 0.6, "top_p": 0.9}
-        )
-        return response['message']['content'].strip()
-    except Exception as e:
-        return f"I'm here with you. Take your time. ({str(e)})"
+    for model in ["mistral", "llama3.2"]:
+        try:
+            response = ollama.chat(
+                model=model,
+                messages=messages,
+                options={"temperature": 0.6, "top_p": 0.9}
+            )
+            return response['message']['content'].strip()
+        except Exception:
+            continue
+    return "I'm here with you. Take your time."
 
 def generate_session_summary(transcript: str) -> str:
     """Generate a concise summary of the session."""

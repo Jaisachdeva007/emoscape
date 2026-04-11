@@ -1,12 +1,15 @@
 """EmoScape FastAPI backend server."""
 import time
 import json
+import asyncio
+import subprocess
+import tempfile
 from datetime import datetime
 from typing import List, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import os
@@ -54,6 +57,10 @@ def root():
     if os.path.exists(index):
         return FileResponse(index)
     return {"status": "EmoScape API running", "docs": "/docs"}
+
+@app.get("/room")
+def room():
+    return FileResponse(os.path.join(FRONTEND_DIR, 'room.html'))
 
 @app.post("/session/start")
 def start_session(db: Session = Depends(get_db)):
@@ -213,6 +220,47 @@ def get_day_summary(date: str = None, db: Session = Depends(get_db)):
         "session_count": len(day_sessions),
         "themes": [s.theme for s in day_sessions if s.theme]
     }
+
+@app.get("/tts")
+async def tts(text: str, voice: str = "en-US-JennyNeural"):
+    """Convert text to speech using edge-tts, stream audio back."""
+    try:
+        with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as f:
+            tmpfile = f.name
+        proc = await asyncio.create_subprocess_exec(
+            'edge-tts', '--voice', voice, '--text', text, '--write-media', tmpfile,
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+        await proc.wait()
+        def iter_file():
+            with open(tmpfile, 'rb') as f:
+                yield from f
+            os.unlink(tmpfile)
+        return StreamingResponse(iter_file(), media_type='audio/mpeg')
+    except Exception as e:
+        raise HTTPException(500, f"TTS error: {e}")
+
+@app.post("/session/chat-speak")
+async def chat_speak(msg: ChatMessage, db: Session = Depends(get_db)):
+    """Chat + return both text reply and TTS audio URL."""
+    # Reuse existing chat logic
+    session = db.get(ReflectionSession, msg.session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+    utterances = db.query(Utterance).filter(
+        Utterance.session_id == msg.session_id
+    ).order_by(Utterance.created_at).all()
+    history = [{"role": u.speaker if u.speaker=="user" else "assistant", "content": u.text} for u in utterances]
+    past = db.query(ReflectionSession).filter(
+        ReflectionSession.id < msg.session_id, ReflectionSession.summary != ''
+    ).order_by(ReflectionSession.created_at.desc()).limit(5).all()
+    past_summaries = [s.summary for s in past if s.summary]
+    agent_reply = get_agent_response(msg.text, history, past_summaries)
+    user_utt = Utterance(session_id=msg.session_id, speaker='user', text=msg.text, valence=get_valence(msg.text))
+    agent_utt = Utterance(session_id=msg.session_id, speaker='agent', text=agent_reply, valence=get_valence(agent_reply))
+    db.add_all([user_utt, agent_utt])
+    db.commit()
+    return {"reply": agent_reply, "tts_url": f"/tts?text={agent_reply[:300]}"}
 
 @app.get("/health")
 def health():
