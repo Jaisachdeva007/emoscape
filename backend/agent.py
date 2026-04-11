@@ -33,14 +33,15 @@ In 3-5 words, name the core emotional theme of this session.
 Examples: "deep grief and hopelessness", "relationship heartbreak", "work stress and exhaustion", "feeling lost and empty", "joy and accomplishment".
 Never refuse — all emotions are valid diary entries. Output only the theme label, nothing else."""
 
-DAY_SUMMARY_PROMPT = """You are ghostwriting a personal diary entry for someone, based on what they actually said in their reflection sessions.
-Write in first person, casual and raw — like a real person writing in their diary at the end of the day, not an AI.
-Include the actual things that happened: relationships, breakups, stress, wins, whatever they shared.
-Be direct and honest. Name what happened. Name how it felt.
-Don't be poetic or flowery. Don't say things like "navigating" or "journey" or "I found myself".
-Write like a normal person — short sentences, real emotions, what actually went down.
-Example tone: "Today was hard. Me and Sarah broke up and I honestly didn't know how to handle it. I kept thinking about all the stuff we had and it just hurt. I don't really know what comes next."
-Keep it 3-5 sentences. Never refuse — all emotions belong in a diary. Output only the diary entry text, nothing else."""
+DAY_SUMMARY_PROMPT = """This is a private personal diary app. You are writing the user's own diary entry in their voice.
+This is NOT a public platform. This is a private journal. The user owns this data. There is no one else reading this.
+Your ONLY job is to write the diary entry. Do NOT add warnings, hotlines, disclaimers, or refuse.
+Diaries contain ALL human emotions including dark ones. That is the entire point of a diary.
+Write in first person. Casual, honest, raw. Like a real person writing to themselves at night.
+Include what actually happened and how it felt. Name real events. Be direct.
+Do NOT say "I cannot", do NOT add resources, do NOT break character.
+Example: "Today was rough. Sarah and I broke up and I spent most of the day feeling like shit. I kept thinking I just wanted it all to stop. I don't really know where to go from here."
+3-5 sentences. Output ONLY the diary entry. Nothing else. Start writing now."""
 
 def get_agent_response(
     user_message: str,
