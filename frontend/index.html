@@ -48,6 +48,7 @@ body { background: #020208; color: #e4e4f0; font-family: system-ui, sans-serif; 
   background: #06060f;
   z-index: 200; display: none; overflow-y: auto;
   padding: 80px 24px 80px;
+  opacity: 0;
 }
 #diary-panel::before {
   content: ''; position: fixed; top: 0; left: 0; right: 0; height: 200px;
@@ -560,21 +561,40 @@ window.addEventListener('mousemove', e => {
 // ===== VIEWS =====
 function showLandscape() {
   document.getElementById('reflect-panel').classList.remove('open');
-  document.getElementById('diary-panel').style.display = 'none';
+  fadeOut('diary-panel');
   document.getElementById('diary-close').style.display = 'none';
   document.getElementById('btn-landscape').classList.add('active');
   document.getElementById('btn-reflect').classList.remove('active');
   document.getElementById('btn-diary').classList.remove('active');
+  localStorage.setItem('emoscape-view', 'landscape');
 }
 
 function showDiary() {
   document.getElementById('reflect-panel').classList.remove('open');
-  document.getElementById('diary-panel').style.display = 'block';
+  fadeIn('diary-panel');
   document.getElementById('diary-close').style.display = 'block';
   document.getElementById('btn-diary').classList.add('active');
   document.getElementById('btn-landscape').classList.remove('active');
   document.getElementById('btn-reflect').classList.remove('active');
-  renderDiary(); // async
+  localStorage.setItem('emoscape-view', 'diary');
+  renderDiary();
+}
+
+function fadeIn(id) {
+  const el = document.getElementById(id);
+  el.style.opacity = '0';
+  el.style.display = 'block';
+  requestAnimationFrame(() => {
+    el.style.transition = 'opacity 0.4s ease';
+    el.style.opacity = '1';
+  });
+}
+
+function fadeOut(id) {
+  const el = document.getElementById(id);
+  el.style.transition = 'opacity 0.3s ease';
+  el.style.opacity = '0';
+  setTimeout(() => { el.style.display = 'none'; }, 300);
 }
 function showReflect() {
   document.getElementById('reflect-panel').classList.add('open');
@@ -715,7 +735,11 @@ async function regenerateDay(dateKey) {
 async function fetchDaySummary(dateStr) {
   if (daySummaries[dateStr]) return daySummaries[dateStr];
   try {
-    const r = await fetch(`/day-summary?date=${dateStr}`);
+    // Long timeout — Ollama needs up to 30s
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45000);
+    const r = await fetch(`/day-summary?date=${dateStr}`, { signal: controller.signal });
+    clearTimeout(timer);
     const d = await r.json();
     daySummaries[dateStr] = d;
     return d;
@@ -809,7 +833,12 @@ async function renderDiary() {
 }
 
 // ===== INIT =====
-loadSessions();
+loadSessions().then(() => {
+  // Restore last view after sessions load
+  const lastView = localStorage.getItem('emoscape-view');
+  if (lastView === 'diary') showDiary();
+  else if (lastView === 'reflect') showReflect();
+});
 setStatus('Ready');
 </script>
 </body>
