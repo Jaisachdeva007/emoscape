@@ -784,7 +784,7 @@ async function renderDiary() {
   const byDayKey = {};
   sessions.slice().reverse().forEach(s => {
     const d = new Date(s.created_at);
-    const dateKey = d.toISOString().split('T')[0];
+    const dateKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const label = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     if (!byDay[label]) { byDay[label] = []; byDayKey[label] = dateKey; }
     byDay[label].push(s);

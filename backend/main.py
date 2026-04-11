@@ -187,8 +187,10 @@ def get_day_summary(date: str = None, db: Session = Depends(get_db)):
     all_sessions = db.query(ReflectionSession).order_by(ReflectionSession.created_at).all()
     day_sessions = [
         s for s in all_sessions
-        if s.created_at.strftime('%Y-%m-%d') == target and s.transcript
+        if s.created_at.strftime('%Y-%m-%d') == target
+        or (target == str(date_type.today()) and s.created_at.strftime('%Y-%m-%d') in [target, str(date_type.today())])
     ]
+    day_sessions = [s for s in day_sessions if s.transcript]
     
     if not day_sessions:
         return {"date": target, "summary": "", "session_count": 0}
