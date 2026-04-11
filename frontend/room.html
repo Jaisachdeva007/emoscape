@@ -110,7 +110,6 @@ body { background:#04040e; color:#e4e4f0; font-family:system-ui,sans-serif; over
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 // ===== STATE =====
 let sessionId = null, sessionStart = null, turnCount = 0;
@@ -127,7 +126,7 @@ const canvas = document.getElementById('canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setClearColor(0x04040e);
+renderer.setClearColor(0x0a0a1a);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -139,17 +138,20 @@ camera.position.set(0, 1.55, 2.8);
 camera.lookAt(0, 1.5, 0);
 
 // ===== LIGHTING =====
-scene.add(new THREE.AmbientLight(0x1a1a3e, 2));
-const keyLight = new THREE.DirectionalLight(0xd4c8ff, 3);
-keyLight.position.set(2, 4, 3);
+scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+const keyLight = new THREE.DirectionalLight(0xfff5e0, 4);
+keyLight.position.set(2, 5, 4);
 keyLight.castShadow = true;
 scene.add(keyLight);
-const fillLight = new THREE.PointLight(0x6366f1, 2, 8);
-fillLight.position.set(-2, 2, 1);
+const fillLight = new THREE.DirectionalLight(0x8888ff, 2);
+fillLight.position.set(-3, 2, 2);
 scene.add(fillLight);
-const rimLight = new THREE.PointLight(0x8b5cf6, 1.5, 6);
-rimLight.position.set(0, 3, -2);
+const rimLight = new THREE.PointLight(0xa78bfa, 3, 10);
+rimLight.position.set(0, 4, -2);
 scene.add(rimLight);
+const frontLight = new THREE.PointLight(0xffffff, 3, 6);
+frontLight.position.set(0, 2, 4);
+scene.add(frontLight);
 
 // ===== ENVIRONMENT =====
 // Floor
@@ -183,13 +185,13 @@ scene.add(ring);
 function buildAvatar() {
   const group = new THREE.Group();
 
-  const skin = new THREE.MeshStandardMaterial({ color:0xfdd5b1, roughness:0.6 });
-  const hair = new THREE.MeshStandardMaterial({ color:0x2c1810, roughness:0.8 });
-  const shirt = new THREE.MeshStandardMaterial({ color:0x3730a3, roughness:0.7 });
-  const pants = new THREE.MeshStandardMaterial({ color:0x1e1b4b, roughness:0.7 });
-  const eyes = new THREE.MeshStandardMaterial({ color:0x1a3a5c, roughness:0.3 });
-  const white = new THREE.MeshStandardMaterial({ color:0xffffff, roughness:0.4 });
-  const lip = new THREE.MeshStandardMaterial({ color:0xc87070, roughness:0.5 });
+  const skin = new THREE.MeshLambertMaterial({ color:0xfdd5b1 });
+  const hair = new THREE.MeshLambertMaterial({ color:0x2c1810 });
+  const shirt = new THREE.MeshLambertMaterial({ color:0x3730a3 });
+  const pants = new THREE.MeshLambertMaterial({ color:0x1e1b4b });
+  const eyes = new THREE.MeshLambertMaterial({ color:0x1a3a5c });
+  const white = new THREE.MeshLambertMaterial({ color:0xffffff });
+  const lip = new THREE.MeshLambertMaterial({ color:0xc87070 });
 
   function mesh(geo, mat) {
     const m = new THREE.Mesh(geo, mat);
