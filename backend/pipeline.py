@@ -4,12 +4,28 @@ import re
 
 analyzer = SentimentIntensityAnalyzer()
 
+# Words VADER gets wrong in emotional/journaling context
+NEGATIVE_OVERRIDES = {
+    'die', 'dying', 'dead', 'death', 'suicide', 'suicidal', 'kill', 'killing',
+    'hurt', 'pain', 'numb', 'empty', 'hopeless', 'worthless', 'hate', 'hated',
+    'wanna die', 'want to die', 'end it', 'give up', 'cant go on', 'no point'
+}
+
 def get_valence(text: str) -> float:
-    """Extract semantic valence using VADER. Returns -1 to 1."""
+    """Extract semantic valence using VADER with override corrections. Returns -1 to 1."""
     if not text.strip():
         return 0.0
     score = analyzer.polarity_scores(text)
-    return round(score['compound'], 4)
+    compound = score['compound']
+
+    # Apply override: if text contains strong negative words, pull score negative
+    text_lower = text.lower()
+    override_hits = sum(1 for w in NEGATIVE_OVERRIDES if w in text_lower)
+    if override_hits > 0:
+        penalty = min(override_hits * 0.35, 0.9)
+        compound = max(compound - penalty, -1.0)
+
+    return round(compound, 4)
 
 def estimate_articulation_rate(text: str, duration_seconds: float) -> float:
     """
