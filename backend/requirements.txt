@@ -1,0 +1,11 @@
+fastapi==0.115.0
+uvicorn==0.30.6
+faster-whisper==1.0.3
+vaderSentiment==3.3.2
+ollama==0.3.3
+sqlalchemy==2.0.35
+python-multipart==0.0.12
+numpy==1.26.4
+scipy==1.14.1
+aiofiles==24.1.0
+websockets==13.1
