@@ -436,13 +436,13 @@ const splineGroup = new THREE.Group();
 scene.add(splineGroup);
 
 function sessionColor(s) {
-  // Blend valence + arousal for richer color
-  // negative+high arousal = red, negative+low = deep blue, positive+high = orange/yellow, positive+low = teal/green
-  const v = (s.valence + 1) / 2;   // 0-1, 0=negative, 1=positive
-  const a = s.arousal;              // 0-1, 0=calm, 1=activated
+  const v = (s.valence + 1) / 2;   // 0=negative, 1=positive
+  // Boost effective arousal when valence is very negative
+  // So dark emotions always pull toward red even if arousal score is low
+  const negativePull = Math.max(0, 1 - v * 2);  // 1 at valence=-1, 0 at valence=0.5+
+  const a = Math.min(1, s.arousal + negativePull * 0.7);
 
-  // Four color poles
-  const negHigh = new THREE.Color(0xef4444); // red — stressed
+  const negHigh = new THREE.Color(0xef4444); // red — stressed/dark
   const negLow  = new THREE.Color(0x4338ca); // indigo — depleted
   const posHigh = new THREE.Color(0xf59e0b); // amber — energized
   const posLow  = new THREE.Color(0x06b6d4); // cyan — peaceful

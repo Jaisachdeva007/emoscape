@@ -48,9 +48,12 @@ def estimate_articulation_rate(text: str, duration_seconds: float) -> float:
     caps_ratio = sum(1 for w in words if w.isupper() and len(w) > 1) / max(word_count, 1)
 
     # High emotion words
-    high_arousal_words = {'stressed','anxious','excited','overwhelmed','angry','frustrated',
-                          'terrified','amazing','incredible','exhausted','panicking','urgent',
-                          'cant','cannot','never','always','everything','nothing','worst','best'}
+    high_arousal_words = {'stressed','stress','anxious','anxiety','excited','overwhelmed','angry',
+                          'frustrated','terrified','amazing','incredible','exhausted','panicking',
+                          'urgent','cant','cannot','never','always','everything','nothing',
+                          'worst','best','negative','horrible','awful','terrible','depressed',
+                          'miserable','broken','shattered','destroyed','lost','hopeless','empty',
+                          'hate','dying','dead','pain','hurt','scared','afraid','lonely'}
     arousal_hits = sum(1 for w in words if w.lower().strip('!?,. ') in high_arousal_words)
     word_arousal = min(arousal_hits / max(word_count, 1) * 5, 1.0)
 
