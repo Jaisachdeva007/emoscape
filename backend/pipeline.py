@@ -1,5 +1,4 @@
 """Affective feature extraction pipeline."""
-import numpy as np
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import re
 
@@ -23,7 +22,7 @@ def estimate_articulation_rate(text: str, duration_seconds: float) -> float:
     rate = syllable_count / duration_seconds
     # Normal speech: 2-6 syllables/sec → normalize to 0-1
     normalized = (rate - 2.0) / 4.0
-    return float(np.clip(normalized, 0.0, 1.0))
+    return float(max(0.0, min(1.0, normalized)))
 
 def count_syllables(text: str) -> int:
     """Estimate syllable count using vowel nuclei detection."""
@@ -46,9 +45,9 @@ def estimate_intensity(word_count: int, duration_seconds: float, turn_count: int
     Normalized to 0-1.
     """
     # Typical session: 100-500 words, 2-15 min, 4-20 turns
-    word_score = np.clip(word_count / 500, 0, 1)
-    duration_score = np.clip(duration_seconds / 900, 0, 1)
-    turn_score = np.clip(turn_count / 20, 0, 1)
+    word_score = max(0, min(1, word_count / 500))
+    duration_score = max(0, min(1, duration_seconds / 900))
+    turn_score = max(0, min(1, turn_count / 20))
     intensity = (word_score * 0.4 + duration_score * 0.4 + turn_score * 0.2)
     return float(round(intensity, 4))
 
