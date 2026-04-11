@@ -45,46 +45,85 @@ body { background: #020208; color: #e4e4f0; font-family: system-ui, sans-serif; 
 /* DIARY PANEL */
 #diary-panel {
   position: fixed; left: 0; top: 0; bottom: 0; right: 0;
-  background: rgba(4,4,14,.97); backdrop-filter: blur(20px);
+  background: #06060f;
   z-index: 200; display: none; overflow-y: auto;
-  padding: 100px 24px 60px;
+  padding: 80px 24px 80px;
 }
-#diary-inner { max-width: 720px; margin: 0 auto; }
-#diary-inner h2 { font-size: 1.4rem; font-weight: 700; color: #c4b5fd; margin-bottom: 32px; }
-.diary-day { margin-bottom: 40px; }
-.diary-day-header {
-  font-size: .8rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 2px; color: #4a4a6a; margin-bottom: 16px;
-  padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.06);
+#diary-panel::before {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; height: 200px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(109,40,217,.15) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
 }
+#diary-inner { max-width: 680px; margin: 0 auto; position: relative; z-index: 1; }
+
+#diary-header { text-align: center; margin-bottom: 48px; }
+#diary-header .diary-title { font-size: 2rem; font-weight: 800; color: #e4e4f0; letter-spacing: -.5px; }
+#diary-header .diary-subtitle { font-size: .85rem; color: #3d3d52; margin-top: 6px; }
+#diary-header .diary-streak {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.2);
+  border-radius: 50px; padding: 6px 16px; font-size: .8rem; color: #a78bfa;
+  margin-top: 16px;
+}
+
+.diary-day { margin-bottom: 48px; }
+.diary-day-label {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+}
+.diary-day-line { flex: 1; height: 1px; background: rgba(255,255,255,.05); }
+.diary-day-text {
+  font-size: .7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 2.5px; color: #2d2d42; white-space: nowrap;
+}
+
 .diary-entry {
-  background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
-  border-radius: 14px; padding: 20px 24px; margin-bottom: 12px;
-  transition: border-color .2s; cursor: default;
+  position: relative;
+  background: rgba(255,255,255,.025);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px; padding: 0; margin-bottom: 16px;
+  overflow: hidden; transition: all .3s;
 }
-.diary-entry:hover { border-color: rgba(139,92,246,.25); }
-.diary-entry-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.diary-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.diary-entry-meta { flex: 1; }
-.diary-entry-theme { font-size: .95rem; font-weight: 600; color: #e4e4f0; }
-.diary-entry-time { font-size: .75rem; color: #4a4a6a; margin-top: 2px; }
-.diary-entry-summary { font-size: .875rem; color: #8080a0; line-height: 1.6; margin-bottom: 12px; }
-.diary-entry-stats {
-  display: flex; gap: 16px; flex-wrap: wrap;
+.diary-entry:hover { border-color: rgba(139,92,246,.2); transform: translateY(-1px); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+
+.diary-entry-accent { height: 3px; width: 100%; }
+
+.diary-entry-body { padding: 20px 24px 18px; }
+
+.diary-entry-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+.diary-entry-theme { font-size: 1rem; font-weight: 700; color: #e4e4f0; line-height: 1.3; }
+.diary-emotion-badge {
+  font-size: .72rem; font-weight: 600; padding: 4px 10px;
+  border-radius: 50px; white-space: nowrap; margin-left: 12px; flex-shrink: 0;
 }
-.diary-stat {
-  font-size: .72rem; font-family: monospace;
-  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
-  border-radius: 6px; padding: 4px 10px; color: #5a5a72;
+
+.diary-entry-time { font-size: .75rem; color: #3a3a52; margin-bottom: 14px; }
+
+.diary-entry-summary {
+  font-size: .9rem; color: #7070a0; line-height: 1.7;
+  margin-bottom: 16px; font-style: italic;
+  border-left: 2px solid rgba(255,255,255,.06); padding-left: 14px;
 }
-.diary-empty { text-align: center; color: #3d3d52; padding: 80px 0; font-size: 1rem; }
+
+.diary-entry-footer { display: flex; gap: 8px; flex-wrap: wrap; }
+.diary-pill {
+  font-size: .7rem; font-family: monospace;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06);
+  border-radius: 50px; padding: 3px 10px; color: #44445a;
+}
+
+.diary-empty {
+  text-align: center; padding: 100px 0;
+  color: #2d2d42; font-size: 1rem; line-height: 2;
+}
+.diary-empty .big { font-size: 3rem; margin-bottom: 16px; }
+
 #diary-close {
   position: fixed; top: 22px; right: 24px; z-index: 300;
-  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
-  border-radius: 8px; padding: 8px 16px; color: #8080a0;
-  cursor: pointer; font-size: .85rem; display: none;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px; padding: 8px 16px; color: #5a5a72;
+  cursor: pointer; font-size: .82rem; display: none; transition: all .2s;
 }
-#diary-close:hover { color: #e4e4f0; }
+#diary-close:hover { color: #e4e4f0; background: rgba(255,255,255,.08); }
 
 /* REFLECT PANEL — right side drawer */
 #reflect-panel {
@@ -207,8 +246,12 @@ body { background: #020208; color: #e4e4f0; font-family: system-ui, sans-serif; 
 <!-- Diary panel -->
 <div id="diary-panel">
   <div id="diary-inner">
-    <h2>📔 My Journal</h2>
-    <div id="diary-entries"><div class="diary-empty">No sessions yet. Start reflecting to build your journal.</div></div>
+    <div id="diary-header">
+      <div class="diary-title">My Journal</div>
+      <div class="diary-subtitle">A record of your inner world</div>
+      <div class="diary-streak" id="diary-streak">🔥 Loading…</div>
+    </div>
+    <div id="diary-entries"><div class="diary-empty"><div class="big">📓</div>No reflections yet.<br>Start a session to begin your journal.</div></div>
   </div>
 </div>
 <button id="diary-close" onclick="showLandscape()">✕ Close</button>
@@ -617,59 +660,69 @@ function animate() {
 animate();
 
 // ===== DIARY =====
-function emotionLabel(v, a) {
-  if (v < -0.3 && a > 0.5) return '🔴 Stressed';
-  if (v < -0.3 && a <= 0.5) return '🔵 Depleted';
-  if (v >= -0.3 && v <= 0.3) return '🟣 Neutral';
-  if (v > 0.3 && a > 0.5) return '🟠 Energized';
-  return '🩵 Peaceful';
+function emotionInfo(v, a) {
+  if (v < -0.3 && a > 0.5) return { label:'Stressed',    bg:'rgba(239,68,68,.15)',  border:'rgba(239,68,68,.3)',  text:'#fca5a5' };
+  if (v < -0.3 && a <= 0.5) return { label:'Depleted',   bg:'rgba(67,56,202,.15)',  border:'rgba(67,56,202,.3)',  text:'#a5b4fc' };
+  if (v >= -0.3 && v <= 0.3) return { label:'Neutral',   bg:'rgba(139,92,246,.12)', border:'rgba(139,92,246,.25)',text:'#c4b5fd' };
+  if (v > 0.3 && a > 0.5) return  { label:'Energized',   bg:'rgba(245,158,11,.12)', border:'rgba(245,158,11,.3)', text:'#fcd34d' };
+  return                           { label:'Peaceful',    bg:'rgba(6,182,212,.12)',  border:'rgba(6,182,212,.3)',  text:'#67e8f9' };
 }
 
 function sessionColorHex(s) {
-  const col = sessionColor(s);
-  return '#' + col.getHexString();
+  return '#' + sessionColor(s).getHexString();
 }
 
 function renderDiary() {
   const container = document.getElementById('diary-entries');
+  const streak = document.getElementById('diary-streak');
+
   if (!sessions.length) {
-    container.innerHTML = '<div class="diary-empty">No sessions yet. Start reflecting to build your journal.</div>';
+    container.innerHTML = '<div class="diary-empty"><div class="big">📓</div>No reflections yet.<br>Start a session to begin your journal.</div>';
+    streak.textContent = 'Start your first session';
     return;
   }
 
-  // Group by date
+  // Streak count
+  const days = new Set(sessions.map(s => new Date(s.created_at).toDateString()));
+  streak.innerHTML = `🔥 ${days.size} day${days.size!==1?'s':''} of reflection &nbsp;&middot;&nbsp; ${sessions.length} session${sessions.length!==1?'s':''} total`;
+
+  // Group by date, newest first
   const byDay = {};
   sessions.slice().reverse().forEach(s => {
     const d = new Date(s.created_at);
-    const key = d.toLocaleDateString('en-CA', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    const key = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     if (!byDay[key]) byDay[key] = [];
     byDay[key].push(s);
   });
 
   container.innerHTML = Object.entries(byDay).map(([day, entries]) => `
     <div class="diary-day">
-      <div class="diary-day-header">${day}</div>
+      <div class="diary-day-label">
+        <div class="diary-day-line"></div>
+        <div class="diary-day-text">${day}</div>
+        <div class="diary-day-line"></div>
+      </div>
       ${entries.map(s => {
         const d = new Date(s.created_at);
-        const time = d.toLocaleTimeString('en-CA', { hour:'2-digit', minute:'2-digit' });
+        const time = d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
         const col = sessionColorHex(s);
-        const label = emotionLabel(s.valence, s.arousal);
+        const info = emotionInfo(s.valence, s.arousal);
         const mins = s.duration_seconds ? Math.round(s.duration_seconds/60) : 0;
         return `
         <div class="diary-entry">
-          <div class="diary-entry-header">
-            <div class="diary-dot" style="background:${col};box-shadow:0 0 8px ${col}88"></div>
-            <div class="diary-entry-meta">
+          <div class="diary-entry-accent" style="background:linear-gradient(90deg,${col},transparent)"></div>
+          <div class="diary-entry-body">
+            <div class="diary-entry-top">
               <div class="diary-entry-theme">${s.theme || 'Reflection'}</div>
-              <div class="diary-entry-time">${time} · ${label}</div>
+              <div class="diary-emotion-badge" style="background:${info.bg};border:1px solid ${info.border};color:${info.text}">${info.label}</div>
             </div>
-          </div>
-          <div class="diary-entry-summary">${s.summary || 'No summary available.'}</div>
-          <div class="diary-entry-stats">
-            <span class="diary-stat">valence ${s.valence > 0 ? '+' : ''}${s.valence.toFixed(2)}</span>
-            <span class="diary-stat">arousal ${(s.arousal*100).toFixed(0)}%</span>
-            ${mins ? `<span class="diary-stat">${mins} min</span>` : ''}
-            ${s.word_count ? `<span class="diary-stat">${s.word_count} words</span>` : ''}
+            <div class="diary-entry-time">${time}${mins ? ' &nbsp;&middot;&nbsp; ' + mins + ' min' : ''}${s.word_count ? ' &nbsp;&middot;&nbsp; ' + s.word_count + ' words' : ''}</div>
+            <div class="diary-entry-summary">${s.summary || 'Session recorded.'}</div>
+            <div class="diary-entry-footer">
+              <span class="diary-pill">valence ${s.valence>0?'+':''}${s.valence.toFixed(2)}</span>
+              <span class="diary-pill">arousal ${(s.arousal*100).toFixed(0)}%</span>
+              <span class="diary-pill">intensity ${(s.intensity*100).toFixed(0)}%</span>
+            </div>
           </div>
         </div>`;
       }).join('')}
