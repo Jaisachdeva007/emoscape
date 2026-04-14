@@ -160,6 +160,10 @@ function buildAvatar() {
     const av = gltf.scene;
     // Model is 1.85m in meters — no scaling needed
     av.position.set(0, 0, 0);
+    // Check which direction avatar faces by logging
+    const testBox = new THREE.Box3().setFromObject(av);
+    const testSize = testBox.getSize(new THREE.Vector3());
+    console.log('Avaturn model size:', testSize, 'center:', testBox.getCenter(new THREE.Vector3()));
     av.traverse(n => {
       n.castShadow = true; n.receiveShadow = true;
       if (n.name === 'Head') headBone = n;
