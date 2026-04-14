@@ -109,8 +109,8 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x06060f, 5, 18);
 
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.1, 50);
-camera.position.set(0, 1.2, 2.6);
-camera.lookAt(0, 1.1, 0);
+camera.position.set(0, 1.5, 3.0);
+camera.lookAt(0, 0.9, 0);
 
 // ===== LIGHTS =====
 scene.add(new THREE.AmbientLight(0xffffff, 0.8));
@@ -130,8 +130,8 @@ scene.add(front);
 
 // ===== FLOOR =====
 const floor = new THREE.Mesh(
-  new THREE.CircleGeometry(6,64),
-  new THREE.MeshStandardMaterial({color:0x090916, roughness:0.9})
+  new THREE.PlaneGeometry(20,20),
+  new THREE.MeshStandardMaterial({color:0x0a0a18, roughness:1, metalness:0})
 );
 floor.rotation.x = -Math.PI/2;
 floor.receiveShadow = true;
@@ -158,12 +158,9 @@ function buildAvatar() {
   const loader = new THREE.GLTFLoader();
   loader.load('/static/avatar.glb', (gltf) => {
     const av = gltf.scene;
-    // Model is 1.85m in meters — no scaling needed
+    // Avaturn model - already in meters, faces -Z by default
     av.position.set(0, 0, 0);
-    // Check which direction avatar faces by logging
-    const testBox = new THREE.Box3().setFromObject(av);
-    const testSize = testBox.getSize(new THREE.Vector3());
-    console.log('Avaturn model size:', testSize, 'center:', testBox.getCenter(new THREE.Vector3()));
+    av.rotation.y = 0; // Avaturn faces camera already (no flip needed)
     av.traverse(n => {
       n.castShadow = true; n.receiveShadow = true;
       if (n.name === 'Head') headBone = n;
