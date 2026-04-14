@@ -610,7 +610,7 @@ function showReflect() {
 // ===== SESSION API =====
 async function startSession() {
   try {
-    const r = await fetch('/session/start',{method:'POST'});
+    const r = await fetch(window.location.origin+'/session/start',{method:'POST'});
     const d = await r.json();
     currentSessionId = d.session_id;
     sessionStart = Date.now();
@@ -628,7 +628,7 @@ async function sendMessage() {
   turnCount++;
   const thinking = addMsg('agent','…', true);
   try {
-    const r = await fetch('/session/chat',{
+    const r = await fetch(window.location.origin+'/session/chat',{
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({session_id:currentSessionId, text})
     });
@@ -643,7 +643,7 @@ async function endSession() {
   const dur = (Date.now()-sessionStart)/1000;
   setStatus('Processing…');
   try {
-    await fetch('/session/end',{
+    await fetch(window.location.origin+'/session/end',{
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({session_id:currentSessionId, duration_seconds:dur, turn_count:turnCount})
     });
@@ -668,7 +668,7 @@ function addMsg(speaker, text, thinking=false) {
 // ===== DATA =====
 async function loadSessions() {
   try {
-    const r = await fetch('/sessions');
+    const r = await fetch(window.location.origin+'/sessions');
     sessions = await r.json();
     buildSpline(sessions);
     setStatus(sessions.length===0 ? 'Click Reflect to begin' : `${sessions.length} sessions`);
@@ -844,7 +844,7 @@ async function renderDiary() {
       if (!dateKey) continue;
       try {
         console.log('Fetching summary for', dateKey);
-        const r = await fetch('/day-summary?date=' + dateKey);
+        const r = await fetch(window.location.origin+'/day-summary?date=' + dateKey);
         const text = await r.text();
         console.log('Raw response for', dateKey, ':', text.slice(0, 100));
         const d = JSON.parse(text);

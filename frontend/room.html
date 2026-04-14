@@ -89,6 +89,7 @@ body { background:#06060f; color:#e4e4f0; font-family:system-ui,sans-serif; over
 <script src="https://cdn.jsdelivr.net/npm/three@0.142.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 // ===== STATE =====
+const API = window.location.origin; // always hits the right server
 let sessionId=null, sessionStart=null, turnCount=0;
 let isListening=false, isSpeaking=false;
 let recognition=null;
@@ -272,7 +273,7 @@ animate();
 // ===== SESSION =====
 async function startSession() {
   try {
-    const r = await fetch('/session/start',{method:'POST'});
+    const r = await fetch(API+'/session/start',{method:'POST'});
     const d = await r.json();
     sessionId=d.session_id; sessionStart=Date.now(); turnCount=0;
     await agentSpeak("Hey, good to see you. How's your day been going?");
@@ -351,18 +352,27 @@ function stopListening() {
 
 // ===== CHAT =====
 async function sendMessage(text) {
-  if (!text.trim() || !sessionId) return;
+  if (!text.trim()) return;
+  if (!sessionId) {
+    setStatus('Session not ready — restarting...');
+    await startSession();
+    return;
+  }
   addLine('user', text);
   turnCount++;
   setStatus('Thinking…');
   try {
-    const r = await fetch('/session/chat',{
+    const r = await fetch(API+'/session/chat',{
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({session_id:sessionId, text})
     });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     await agentSpeak(d.reply);
-  } catch(e) { setStatus('Error — try again'); }
+  } catch(e) {
+    console.error('Chat error:', e);
+    setStatus('Error: ' + e.message + ' — is server running?');
+  }
 }
 
 async function agentSpeak(text) {
@@ -392,7 +402,7 @@ async function endSession() {
   if (!sessionId) { window.location.href='/'; return; }
   const dur=(Date.now()-sessionStart)/1000;
   await agentSpeak("It was good talking with you. Take care of yourself.");
-  await fetch('/session/end',{
+  await fetch(API+'/session/end',{
     method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({session_id:sessionId, duration_seconds:dur, turn_count:turnCount})
   });
