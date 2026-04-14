@@ -276,6 +276,7 @@ async function startSession() {
     const d = await r.json();
     sessionId=d.session_id; sessionStart=Date.now(); turnCount=0;
     await agentSpeak("Hey, good to see you. How's your day been going?");
+    document.getElementById('type-input').focus();
   } catch(e) { setStatus('Server error — is the backend running?'); }
 }
 
@@ -308,12 +309,21 @@ function toggleMic() {
 
 function startListening() {
   if (!recognition) recognition = setupRecognition();
-  if (!recognition) return;
+  if (!recognition) {
+    document.getElementById('type-input').focus();
+    setStatus('Voice not supported — type below');
+    return;
+  }
   isListening = true;
   document.getElementById('mic-btn').className = 'listening';
   document.getElementById('mic-btn').textContent = '🔴';
   setStatus('Listening… speak now');
-  try { recognition.start(); } catch(e){ console.error(e); }
+  try { recognition.start(); } catch(e){
+    console.error(e);
+    stopListening();
+    document.getElementById('type-input').focus();
+    setStatus('Mic unavailable — type below');
+  }
 }
 
 function stopListening() {
@@ -402,7 +412,8 @@ startOverlay.innerHTML = `
   <div style="text-align:center;pointer-events:none;">
     <div style="font-size:2.5rem;margin-bottom:16px;">🧠</div>
     <div style="font-size:1.1rem;font-weight:700;color:#c4b5fd;margin-bottom:8px;">EmoScape Session Room</div>
-    <div style="font-size:.85rem;color:#5a5a82;margin-bottom:28px;">Your therapist avatar is ready.</div>
+    <div style="font-size:.85rem;color:#5a5a82;margin-bottom:8px;">Your therapist avatar is ready.</div>
+    <div style="font-size:.75rem;color:#3a3a52;margin-bottom:28px;">Voice works best in Chrome. You can also type.</div>
     <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;padding:14px 32px;color:white;font-size:1rem;font-weight:700;display:inline-block;">Click anywhere to begin</div>
   </div>
 `;
