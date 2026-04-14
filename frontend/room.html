@@ -107,8 +107,8 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x06060f, 5, 18);
 
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.1, 50);
-camera.position.set(0, 1.2, 2.8);
-camera.lookAt(0, 1.0, 0);
+camera.position.set(0, 1.0, 2.2);
+camera.lookAt(0, 1.0, -0.3);
 
 // ===== LIGHTS =====
 scene.add(new THREE.AmbientLight(0xffffff, 0.8));
@@ -156,13 +156,18 @@ const loader = new THREE.GLTFLoader();
 loader.load('/static/avatar.glb',
   (gltf) => {
     const av = gltf.scene;
-    // Compute bounding box and auto-scale to ~1.7m
+    // Compute bounding box and auto-scale to ~1.7 units tall
     const box = new THREE.Box3().setFromObject(av);
     const size = box.getSize(new THREE.Vector3());
-    const s = 1.7 / size.y;
+    // size.y might be in mm (e.g. 1700) or m (e.g. 1.7) — normalize to 1.7
+    const targetHeight = 1.7;
+    const s = targetHeight / Math.max(size.y, 0.001);
     av.scale.setScalar(s);
+    // Recompute after scale
     const box2 = new THREE.Box3().setFromObject(av);
     av.position.y = -box2.min.y; // sit on floor
+    // Move avatar back a bit so camera can see face
+    av.position.z = -0.3;
 
     // Find head bone
     av.traverse(n => {
