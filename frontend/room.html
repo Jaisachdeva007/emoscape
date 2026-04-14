@@ -156,17 +156,22 @@ const loader = new THREE.GLTFLoader();
 loader.load('/static/avatar.glb',
   (gltf) => {
     const av = gltf.scene;
-    // Scale to exactly 1.7m regardless of original units
-    scene.add(av); // must be in scene for box to work
-    const box = new THREE.Box3().setFromObject(av);
-    const size = box.getSize(new THREE.Vector3());
-    const s = 1.7 / Math.max(size.y, 0.001);
+    // Scale: compute BEFORE adding to scene using raw geometry
+    let maxY = 0, minY = Infinity;
+    av.traverse(n => {
+      if (n.isMesh && n.geometry) {
+        n.geometry.computeBoundingBox();
+        const b = n.geometry.boundingBox;
+        if (b.max.y > maxY) maxY = b.max.y;
+        if (b.min.y < minY) minY = b.min.y;
+      }
+    });
+    const rawHeight = maxY - minY;
+    const s = rawHeight > 0 ? 1.7 / rawHeight : 1;
     av.scale.setScalar(s);
-    // Recompute after scaling
-    const box2 = new THREE.Box3().setFromObject(av);
-    av.position.y = -box2.min.y;
+    av.position.y = -minY * s;
     av.position.z = -0.3;
-    console.log('Final scale:', s, 'height was:', size.y);
+    console.log('Raw height:', rawHeight, 'scale:', s);
 
     // Find head bone
     av.traverse(n => {
@@ -353,12 +358,31 @@ window.addEventListener('resize',()=>{
   renderer.setSize(window.innerWidth,window.innerHeight);
 });
 
-// Wait for voices to load then start
-if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => {};
-  window.speechSynthesis.getVoices();
-}
-startSession();
+// Chrome requires user gesture before speech + mic
+// Show a start button overlay
+const startOverlay = document.createElement('div');
+startOverlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(4,4,14,.92);';
+startOverlay.innerHTML = `
+  <div style="text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:16px;">🧠</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#c4b5fd;margin-bottom:8px;">EmoScape Session Room</div>
+    <div style="font-size:.85rem;color:#5a5a82;margin-bottom:28px;">Your therapist avatar is ready. Allow microphone when prompted.</div>
+    <button onclick="beginSession()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:10px;padding:14px 32px;color:white;font-size:1rem;font-weight:700;cursor:pointer;">Begin Session</button>
+  </div>
+`;
+document.body.appendChild(startOverlay);
+
+window.beginSession = async function() {
+  startOverlay.remove();
+  // Pre-load voices
+  if (window.speechSynthesis) window.speechSynthesis.getVoices();
+  // Request mic permission explicitly
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    stream.getTracks().forEach(t=>t.stop()); // just for permission
+  } catch(e) { console.warn('Mic permission denied:', e); }
+  startSession();
+};
 </script>
 </body>
 </html>
