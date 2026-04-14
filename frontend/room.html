@@ -153,8 +153,32 @@ for(let i=0;i<500;i++){pp[i*3]=(Math.random()-.5)*14;pp[i*3+1]=Math.random()*5;p
 pg.setAttribute('position', new THREE.Float32BufferAttribute(pp,3));
 scene.add(new THREE.Points(pg, new THREE.PointsMaterial({color:0x3d3070,size:0.022,transparent:true,opacity:0.5})));
 
-// ===== BUILD AVATAR =====
+// ===== LOAD REAL HUMAN AVATAR (Michelle GLB, 1.66m, already in meters) =====
 function buildAvatar() {
+  const loader = new THREE.GLTFLoader();
+  loader.load('/static/avatar.glb', (gltf) => {
+    const av = gltf.scene;
+    // Michelle is already 1.66m in meters — no scaling needed
+    av.position.set(0, 0, 0);
+    av.rotation.y = Math.PI; // face camera
+    av.traverse(n => {
+      n.castShadow = true; n.receiveShadow = true;
+      if (n.name === 'mixamorig:Head') headBone = n;
+    });
+    if (gltf.animations?.length) {
+      avatarMixer = new THREE.AnimationMixer(av);
+      // Play TPose as idle
+      const anim = gltf.animations.find(a => /tpose/i.test(a.name)) || gltf.animations[0];
+      avatarMixer.clipAction(anim).play();
+    }
+    scene.add(av);
+    document.getElementById('mic-hint').textContent = 'Click mic to speak';
+    // Remove placeholder
+    if (window._placeholder) { scene.remove(window._placeholder); }
+  }, null, () => { /* fallback already built */ });
+}
+
+function buildPlaceholder() {
   const g = new THREE.Group();
   const P = c => new THREE.MeshPhongMaterial({color:c,shininess:40});
   const S = (geo,col,x,y,z,sx,sy,sz) => {
@@ -218,11 +242,13 @@ function buildAvatar() {
   S(new THREE.SphereGeometry(.04,12,12), 0xf0c0a0,  .23,1.73,.0, 1,1,.45);
 
   g.position.y = 0;
+  window._placeholder = g;
   scene.add(g);
-  document.getElementById('mic-hint').textContent = 'Click mic to speak';
   return g;
 }
 
+// Show placeholder immediately, replace with real avatar when loaded
+buildPlaceholder();
 buildAvatar();
 
 // ===== ANIMATION LOOP =====
