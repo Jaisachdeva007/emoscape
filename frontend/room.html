@@ -381,17 +381,40 @@ async function agentSpeak(text) {
   document.getElementById('mic-btn').className = 'speaking';
   document.getElementById('mic-btn').textContent = '🔊';
   setStatus('Speaking…');
-  await new Promise((resolve) => {
-    if (!window.speechSynthesis) { setTimeout(resolve, text.length*42); return; }
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    const voices = window.speechSynthesis.getVoices();
-    const v = voices.find(v=>v.name==='Samantha')||voices.find(v=>v.name.includes('Karen'))||voices.find(v=>v.lang==='en-US'&&v.localService)||voices[0];
-    if (v) utt.voice = v;
-    utt.rate = 0.9; utt.pitch = 1.05; utt.volume = 1;
-    utt.onend = resolve; utt.onerror = resolve;
-    window.speechSynthesis.speak(utt);
-  });
+
+  // Try edge-tts neural voice first (natural), fall back to browser TTS
+  let spoken = false;
+  try {
+    const url = API + '/tts?voice=en-US-JennyNeural&text=' + encodeURIComponent(text.slice(0,300));
+    const audio = new Audio(url);
+    audio.volume = 1;
+    await new Promise((resolve, reject) => {
+      audio.oncanplaythrough = () => audio.play().catch(reject);
+      audio.onended = resolve;
+      audio.onerror = reject;
+      // Timeout fallback after 8s if audio never loads
+      setTimeout(reject, 8000);
+    });
+    spoken = true;
+  } catch(e) {
+    console.warn('edge-tts failed, using browser TTS:', e);
+  }
+
+  // Fallback: browser TTS
+  if (!spoken) {
+    await new Promise((resolve) => {
+      if (!window.speechSynthesis) { setTimeout(resolve, text.length*40); return; }
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      const voices = window.speechSynthesis.getVoices();
+      const v = voices.find(v=>v.name==='Samantha')||voices.find(v=>v.name.includes('Karen'))||voices.find(v=>v.lang==='en-US'&&v.localService)||voices[0];
+      if (v) utt.voice = v;
+      utt.rate = 0.88; utt.pitch = 1.05; utt.volume = 1;
+      utt.onend = resolve; utt.onerror = resolve;
+      window.speechSynthesis.speak(utt);
+    });
+  }
+
   isSpeaking = false;
   document.getElementById('mic-btn').className = '';
   document.getElementById('mic-btn').textContent = '🎤';
