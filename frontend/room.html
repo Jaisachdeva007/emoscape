@@ -158,28 +158,16 @@ const loader = new THREE.GLTFLoader();
 loader.load('/static/avatar.glb',
   (gltf) => {
     const av = gltf.scene;
-    // Scale: compute BEFORE adding to scene using raw geometry
-    let maxY = 0, minY = Infinity;
-    av.traverse(n => {
-      if (n.isMesh && n.geometry) {
-        n.geometry.computeBoundingBox();
-        const b = n.geometry.boundingBox;
-        if (b.max.y > maxY) maxY = b.max.y;
-        if (b.min.y < minY) minY = b.min.y;
-      }
-    });
-    const rawHeight = maxY - minY;
-    const s = rawHeight > 0 ? 1.7 / rawHeight : 1;
-    av.scale.setScalar(s);
-    av.position.y = -minY * s;
-    av.position.z = -0.3;
-    console.log('Raw height:', rawHeight, 'scale:', s);
+    // Xbot from Mixamo - known scale
+    av.scale.setScalar(0.01); // Xbot is in cm, convert to meters
+    av.position.set(0, 0, -0.3);
+    av.rotation.y = Math.PI;
 
     // Find head bone
     av.traverse(n => {
       n.castShadow = true;
       n.receiveShadow = true;
-      if (n.isBone && /head/i.test(n.name)) headBone = n;
+      if ((n.isBone || n.type==='Bone') && /head$/i.test(n.name)) headBone = n;
     });
 
     // Play idle/walk animation
