@@ -156,18 +156,17 @@ const loader = new THREE.GLTFLoader();
 loader.load('/static/avatar.glb',
   (gltf) => {
     const av = gltf.scene;
-    // Compute bounding box and auto-scale to ~1.7 units tall
+    // Scale to exactly 1.7m regardless of original units
+    scene.add(av); // must be in scene for box to work
     const box = new THREE.Box3().setFromObject(av);
     const size = box.getSize(new THREE.Vector3());
-    // size.y might be in mm (e.g. 1700) or m (e.g. 1.7) — normalize to 1.7
-    const targetHeight = 1.7;
-    const s = targetHeight / Math.max(size.y, 0.001);
+    const s = 1.7 / Math.max(size.y, 0.001);
     av.scale.setScalar(s);
-    // Recompute after scale
+    // Recompute after scaling
     const box2 = new THREE.Box3().setFromObject(av);
-    av.position.y = -box2.min.y; // sit on floor
-    // Move avatar back a bit so camera can see face
+    av.position.y = -box2.min.y;
     av.position.z = -0.3;
+    console.log('Final scale:', s, 'height was:', size.y);
 
     // Find head bone
     av.traverse(n => {
@@ -188,9 +187,7 @@ loader.load('/static/avatar.glb',
       }
     }
 
-    scene.add(av);
     document.getElementById('mic-hint').textContent = 'Click mic to speak';
-    console.log('Avatar loaded, size:', size, 'scale:', s, 'animations:', gltf.animations.map(a=>a.name));
   },
   (p) => {
     const pct = p.total ? Math.round(p.loaded/p.total*100) : '...';
