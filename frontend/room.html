@@ -400,15 +400,16 @@ window.addEventListener('resize',()=>{
 // Chrome requires user gesture before speech + mic
 // Show a start button overlay
 const startOverlay = document.createElement('div');
-startOverlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(4,4,14,.92);';
+startOverlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(4,4,14,.92);cursor:pointer;';
 startOverlay.innerHTML = `
-  <div style="text-align:center;">
+  <div style="text-align:center;pointer-events:none;">
     <div style="font-size:2.5rem;margin-bottom:16px;">🧠</div>
     <div style="font-size:1.1rem;font-weight:700;color:#c4b5fd;margin-bottom:8px;">EmoScape Session Room</div>
-    <div style="font-size:.85rem;color:#5a5a82;margin-bottom:28px;">Your therapist avatar is ready. Allow microphone when prompted.</div>
-    <button onclick="beginSession()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:10px;padding:14px 32px;color:white;font-size:1rem;font-weight:700;cursor:pointer;">Begin Session</button>
+    <div style="font-size:.85rem;color:#5a5a82;margin-bottom:28px;">Your therapist avatar is ready.</div>
+    <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;padding:14px 32px;color:white;font-size:1rem;font-weight:700;display:inline-block;">Click anywhere to begin</div>
   </div>
 `;
+startOverlay.addEventListener('click', beginSession);
 document.body.appendChild(startOverlay);
 
 window.beginSession = async function() {
