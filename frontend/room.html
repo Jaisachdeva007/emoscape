@@ -288,17 +288,33 @@ function setupRecognition() {
   r.continuous = false;
   r.interimResults = true;
   r.lang = 'en-US';
+  let lastTranscript = '';
   r.onresult = (e) => {
     const txt = Array.from(e.results).map(x=>x[0].transcript).join('');
+    lastTranscript = txt;
     if (e.results[e.results.length-1].isFinal) {
       stopListening();
-      sendMessage(txt);
+      if (txt.trim()) sendMessage(txt);
     } else {
       setStatus('🎤 ' + txt);
     }
   };
-  r.onerror = (e) => { console.error('Speech error:', e.error); stopListening(); setStatus('Mic error: ' + e.error); };
-  r.onend = () => { if(isListening) stopListening(); };
+  r.onerror = (e) => {
+    console.error('Speech error:', e.error);
+    stopListening();
+    setStatus('Mic error: ' + e.error + ' — try typing instead');
+    document.getElementById('type-input').focus();
+  };
+  r.onend = () => {
+    // If we have a transcript but isFinal never fired, send it anyway
+    if (isListening && lastTranscript.trim()) {
+      stopListening();
+      sendMessage(lastTranscript);
+    } else if (isListening) {
+      stopListening();
+    }
+    lastTranscript = '';
+  };
   return r;
 }
 
