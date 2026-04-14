@@ -76,10 +76,12 @@ body { background:#06060f; color:#e4e4f0; font-family:system-ui,sans-serif; over
   <div id="hud-inner">
     <div id="transcript"></div>
     <div id="controls">
-      <button id="mic-btn" onclick="toggleMic()">🎤</button>
-      <div id="status-text">Starting session…</div>
-      <button id="end-btn" onclick="endSession()">End Session</button>
+      <button id="mic-btn" onclick="toggleMic()" title="Hold to speak">🎤</button>
+      <input id="type-input" type="text" placeholder="Or type here and press Enter…" onkeydown="if(event.key==='Enter')sendTyped()" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:10px 14px;color:#e4e4f0;font-size:.85rem;outline:none;font-family:inherit;">
+      <button onclick="sendTyped()" style="background:rgba(139,92,246,.3);border:1px solid rgba(139,92,246,.4);border-radius:8px;padding:10px 14px;color:#c4b5fd;cursor:pointer;font-size:.82rem;">Send</button>
+      <button id="end-btn" onclick="endSession()">End</button>
     </div>
+    <div id="status-text" style="font-size:.75rem;color:#3a3a55;margin-top:6px;">Starting…</div>
   </div>
 </div>
 
@@ -107,8 +109,8 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x06060f, 5, 18);
 
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.1, 50);
-camera.position.set(0, 1.0, 2.2);
-camera.lookAt(0, 1.0, -0.3);
+camera.position.set(0, 1.1, 2.4);
+camera.lookAt(0, 1.2, -0.3);
 
 // ===== LIGHTS =====
 scene.add(new THREE.AmbientLight(0xffffff, 0.8));
@@ -351,6 +353,13 @@ function addLine(speaker, text) {
   t.appendChild(d); t.scrollTop=t.scrollHeight;
 }
 function setStatus(m) { document.getElementById('status-text').textContent=m; }
+function sendTyped() {
+  const inp = document.getElementById('type-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  sendMessage(text);
+}
 
 window.addEventListener('resize',()=>{
   camera.aspect=window.innerWidth/window.innerHeight;
