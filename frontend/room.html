@@ -6,73 +6,78 @@
 <title>EmoScape — Session Room</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#04040e; color:#e4e4f0; font-family:system-ui,sans-serif; overflow:hidden; height:100vh; }
+body { background:#06060f; color:#e4e4f0; font-family:system-ui,sans-serif; overflow:hidden; height:100vh; }
 #canvas { width:100vw; height:100vh; display:block; position:fixed; top:0; left:0; }
 
 #hud {
   position:fixed; bottom:0; left:0; right:0; z-index:100;
-  padding:24px 32px;
-  background:linear-gradient(to top, rgba(4,4,14,.98) 60%, transparent);
+  padding:20px 32px 28px;
+  background:linear-gradient(to top, rgba(4,4,14,1) 50%, transparent);
 }
-#hud-inner { max-width:700px; margin:0 auto; }
+#hud-inner { max-width:680px; margin:0 auto; }
 #transcript {
-  min-height:60px; max-height:140px; overflow-y:auto;
-  margin-bottom:16px; padding:0 4px;
+  max-height:130px; overflow-y:auto; margin-bottom:14px; padding:0 2px;
+  scrollbar-width:thin; scrollbar-color:rgba(139,92,246,.2) transparent;
 }
-.line { font-size:.9rem; line-height:1.6; margin-bottom:6px; animation:fadeUp .3s ease; }
+.line { font-size:.88rem; line-height:1.6; margin-bottom:5px; animation:fadeUp .25s ease; }
 .line.agent { color:#c4b5fd; }
-.line.agent::before { content:'✦ '; opacity:.5; }
-.line.user { color:#5a5a82; font-style:italic; }
+.line.agent::before { content:'✦ '; opacity:.4; }
+.line.user { color:#4a4a6a; font-style:italic; }
 .line.user::before { content:'you · '; opacity:.4; font-style:normal; }
-@keyframes fadeUp { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:none} }
 
 #controls { display:flex; gap:12px; align-items:center; }
 #mic-btn {
-  width:56px; height:56px; border-radius:50%;
+  width:54px; height:54px; border-radius:50%; border:none; cursor:pointer;
+  font-size:1.3rem; display:flex; align-items:center; justify-content:center;
+  transition:all .25s; flex-shrink:0;
   background:linear-gradient(135deg,#6366f1,#8b5cf6);
-  border:none; cursor:pointer; font-size:1.3rem;
-  display:flex; align-items:center; justify-content:center;
-  transition:all .3s; flex-shrink:0;
   box-shadow:0 4px 20px rgba(99,102,241,.4);
 }
-#mic-btn.listening { background:linear-gradient(135deg,#ef4444,#dc2626); animation:pulse-ring 1.5s infinite; }
+#mic-btn.listening {
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  box-shadow:0 0 0 0 rgba(239,68,68,.5);
+  animation:pulse 1.4s infinite;
+}
 #mic-btn.speaking { background:linear-gradient(135deg,#059669,#10b981); }
-@keyframes pulse-ring {
+@keyframes pulse {
   0%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}
   70%{box-shadow:0 0 0 14px rgba(239,68,68,0)}
   100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}
 }
-#status-text { flex:1; font-size:.85rem; color:#3a3a5a; }
+#status-text { flex:1; font-size:.82rem; color:#3a3a55; }
 #end-btn {
-  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
-  border-radius:8px; padding:10px 18px; color:#5a5a72;
-  cursor:pointer; font-size:.82rem; transition:all .2s;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09);
+  border-radius:8px; padding:10px 16px; color:#4a4a62;
+  cursor:pointer; font-size:.8rem; transition:all .2s;
 }
-#end-btn:hover { color:#e4e4f0; }
+#end-btn:hover { color:#e4e4f0; border-color:rgba(255,255,255,.2); }
 #back-btn {
-  position:fixed; top:20px; left:20px; z-index:200;
-  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
-  border-radius:8px; padding:8px 16px; color:#5a5a72;
-  cursor:pointer; font-size:.82rem; text-decoration:none; transition:all .2s;
+  position:fixed; top:18px; left:18px; z-index:200;
+  background:rgba(10,10,24,.8); border:1px solid rgba(255,255,255,.08);
+  border-radius:8px; padding:7px 14px; color:#5a5a72;
+  text-decoration:none; font-size:.8rem; transition:all .2s;
 }
 #back-btn:hover { color:#e4e4f0; }
-#loading-msg {
-  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-  color:#4a4a6a; font-size:.9rem; z-index:50; text-align:center;
+#mic-hint {
+  position:fixed; top:18px; left:50%; transform:translateX(-50%);
+  background:rgba(10,10,28,.85); backdrop-filter:blur(12px);
+  border:1px solid rgba(139,92,246,.2); border-radius:50px;
+  padding:7px 18px; font-size:.78rem; color:#7070a0; z-index:200;
 }
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
 <a href="/" id="back-btn">← Landscape</a>
-<div id="loading-msg">Loading avatar…</div>
+<div id="mic-hint">Loading avatar…</div>
 
 <div id="hud">
   <div id="hud-inner">
     <div id="transcript"></div>
     <div id="controls">
       <button id="mic-btn" onclick="toggleMic()">🎤</button>
-      <div id="status-text">Loading…</div>
+      <div id="status-text">Starting session…</div>
       <button id="end-btn" onclick="endSession()">End Session</button>
     </div>
   </div>
@@ -82,49 +87,49 @@ body { background:#04040e; color:#e4e4f0; font-family:system-ui,sans-serif; over
 <script src="https://cdn.jsdelivr.net/npm/three@0.142.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 // ===== STATE =====
-let sessionId = null, sessionStart = null, turnCount = 0;
-let isListening = false, isSpeaking = false;
-let recognition = null;
-let avatarModel = null, avatarMixer = null, headBone = null, mouthMesh = null;
+let sessionId=null, sessionStart=null, turnCount=0;
+let isListening=false, isSpeaking=false;
+let recognition=null;
+let avatarMixer=null, headBone=null;
 
-// ===== THREE.JS =====
+// ===== RENDERER =====
 const canvas = document.getElementById('canvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setClearColor(0x060614);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setClearColor(0x06060f);
 renderer.shadowMap.enabled = true;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+renderer.toneMappingExposure = 1.4;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x060614, 6, 20);
+scene.fog = new THREE.Fog(0x06060f, 5, 18);
 
-const camera = new THREE.PerspectiveCamera(40, window.innerWidth/window.innerHeight, 0.1, 100);
-camera.position.set(0, 0.8, 3.5);
-camera.lookAt(0, 0.8, 0);
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.1, 50);
+camera.position.set(0, 1.2, 2.8);
+camera.lookAt(0, 1.0, 0);
 
-// Lighting
-scene.add(new THREE.AmbientLight(0x8080b0, 1.2));
-const key = new THREE.DirectionalLight(0xfff0e0, 2.5);
-key.position.set(1.5, 3, 2.5);
+// ===== LIGHTS =====
+scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+const key = new THREE.DirectionalLight(0xfff5e4, 3.5);
+key.position.set(2, 4, 3);
 key.castShadow = true;
 scene.add(key);
-const fill = new THREE.DirectionalLight(0x6060ff, 1.2);
-fill.position.set(-2, 1, 1);
+const fill = new THREE.DirectionalLight(0x8888ff, 1.5);
+fill.position.set(-3, 2, 2);
 scene.add(fill);
-const rim = new THREE.PointLight(0xa78bfa, 2, 5);
-rim.position.set(0, 3, -1.5);
+const rim = new THREE.PointLight(0xa78bfa, 3, 6);
+rim.position.set(0, 3.5, -1.5);
 scene.add(rim);
-const front = new THREE.PointLight(0xffffff, 1, 4);
-front.position.set(0, 1.6, 3);
+const front = new THREE.PointLight(0xffffff, 2, 5);
+front.position.set(0, 1.5, 3.5);
 scene.add(front);
 
-// Floor
+// ===== FLOOR =====
 const floor = new THREE.Mesh(
-  new THREE.CircleGeometry(5, 64),
-  new THREE.MeshStandardMaterial({ color:0x0a0a1a, roughness:1 })
+  new THREE.CircleGeometry(6,64),
+  new THREE.MeshStandardMaterial({color:0x090916, roughness:0.9})
 );
 floor.rotation.x = -Math.PI/2;
 floor.receiveShadow = true;
@@ -132,146 +137,98 @@ scene.add(floor);
 
 // Ground glow
 const glow = new THREE.Mesh(
-  new THREE.CircleGeometry(0.8, 64),
-  new THREE.MeshBasicMaterial({ color:0x4f46e5, transparent:true, opacity:0.08, side:THREE.DoubleSide })
+  new THREE.CircleGeometry(0.9,64),
+  new THREE.MeshBasicMaterial({color:0x4f46e5, transparent:true, opacity:0.07, side:THREE.DoubleSide})
 );
 glow.rotation.x = -Math.PI/2;
-glow.position.y = 0.01;
+glow.position.y = 0.005;
 scene.add(glow);
 
 // Particles
-const pGeo = new THREE.BufferGeometry();
-const pPos = new Float32Array(600*3);
-for(let i=0;i<600;i++){pPos[i*3]=(Math.random()-.5)*10;pPos[i*3+1]=Math.random()*4;pPos[i*3+2]=(Math.random()-.5)*10;}
-pGeo.setAttribute('position', new THREE.Float32BufferAttribute(pPos,3));
-scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({color:0x3d3080,size:0.025,transparent:true,opacity:0.5})));
+const pg = new THREE.BufferGeometry();
+const pp = new Float32Array(500*3);
+for(let i=0;i<500;i++){pp[i*3]=(Math.random()-.5)*14;pp[i*3+1]=Math.random()*5;pp[i*3+2]=(Math.random()-.5)*14;}
+pg.setAttribute('position', new THREE.Float32BufferAttribute(pp,3));
+scene.add(new THREE.Points(pg, new THREE.PointsMaterial({color:0x3d3070,size:0.022,transparent:true,opacity:0.5})));
 
 // ===== LOAD AVATAR =====
-// Using a public RPM avatar URL
-const AVATAR_URL = '/static/avatar.glb';
+const loader = new THREE.GLTFLoader();
+loader.load('/static/avatar.glb',
+  (gltf) => {
+    const av = gltf.scene;
+    // Compute bounding box and auto-scale to ~1.7m
+    const box = new THREE.Box3().setFromObject(av);
+    const size = box.getSize(new THREE.Vector3());
+    const s = 1.7 / size.y;
+    av.scale.setScalar(s);
+    const box2 = new THREE.Box3().setFromObject(av);
+    av.position.y = -box2.min.y; // sit on floor
 
-function loadAvatar() {
-  const loader = new THREE.GLTFLoader();
-  loader.load(
-    AVATAR_URL,
-    (gltf) => {
-      document.getElementById('loading-msg').style.display = 'none';
-      const avatar = gltf.scene;
-      // Auto-fit: compute bounding box and center
-      const box = new THREE.Box3().setFromObject(avatar);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
-      // Scale to ~1.7m height
-      const scale = 1.7 / size.y;
-      avatar.scale.setScalar(scale);
-      avatar.position.set(-center.x * scale, -box.min.y * scale, 0);
-      avatar.rotation.y = Math.PI; // face camera
-      console.log('Avatar size:', size, 'scale:', scale);
-      avatar.traverse(n => {
-        n.castShadow = true;
-        n.receiveShadow = true;
-        if (n.name === 'Wolf3D_Head' || n.name === 'EyeLeft' || n.name === 'EyeRight') {
-          if (n.morphTargetDictionary) mouthMesh = n;
-        }
-        if (n.name === 'mixamorigHead' || n.name === 'Head') headBone = n;
-      });
-      if (gltf.animations?.length) {
-        avatarMixer = new THREE.AnimationMixer(avatar);
-        const idle = gltf.animations.find(a => /idle/i.test(a.name)) || gltf.animations[0];
-        if (idle) avatarMixer.clipAction(idle).play();
+    // Find head bone
+    av.traverse(n => {
+      n.castShadow = true;
+      n.receiveShadow = true;
+      if (n.isBone && /head/i.test(n.name)) headBone = n;
+    });
+
+    // Play idle/walk animation
+    if (gltf.animations?.length) {
+      avatarMixer = new THREE.AnimationMixer(av);
+      const idle = gltf.animations.find(a => /idle/i.test(a.name))
+                || gltf.animations.find(a => /walk/i.test(a.name))
+                || gltf.animations[0];
+      if (idle) {
+        const action = avatarMixer.clipAction(idle);
+        action.play();
       }
-      scene.add(avatar);
-      avatarModel = avatar;
-      setStatus('Click mic to speak');
-    },
-    (progress) => {
-      const pct = Math.round(progress.loaded / progress.total * 100);
-      document.getElementById('loading-msg').textContent = `Loading avatar… ${pct}%`;
-    },
-    (err) => {
-      console.warn('RPM load failed:', err);
-      document.getElementById('loading-msg').textContent = '';
-      buildFallbackAvatar();
-      setStatus('Click mic to speak');
     }
-  );
-}
 
-function buildFallbackAvatar() {
-  // Clean stylized avatar as fallback
-  const g = new THREE.Group();
-  const S = (geo,mat,px,py,pz,sx,sy,sz) => {
-    const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({color:mat}));
-    m.position.set(px||0,py||0,pz||0);
-    if(sx) m.scale.set(sx,sy,sz);
-    m.castShadow=true; g.add(m); return m;
-  };
-  // Body
-  S(new THREE.CylinderGeometry(.18,.22,.65,24), 0x4f46e5, 0, 1.0, 0);
-  // Neck
-  S(new THREE.CylinderGeometry(.07,.09,.15,12), 0xf5d0a9, 0, 1.41, 0);
-  // Head
-  const head = S(new THREE.SphereGeometry(.21,32,32), 0xf5d0a9, 0, 1.66, 0);
-  head.scale.y = 1.1;
-  headBone = head;
-  // Hair
-  S(new THREE.SphereGeometry(.22,16,8,0,Math.PI*2,0,Math.PI*.5), 0x1a0a0a, 0, 1.72, -.02);
-  // Eyes
-  [-.07,.07].forEach(x=>{
-    S(new THREE.SphereGeometry(.03,10,10), 0xffffff, x, 1.68, .19);
-    S(new THREE.SphereGeometry(.018,10,10), 0x1a2a5a, x, 1.68, .21);
-    S(new THREE.SphereGeometry(.008,8,8), 0x000000, x, 1.68, .225);
-  });
-  // Nose
-  S(new THREE.SphereGeometry(.018,8,8), 0xe8c09a, 0, 1.635, .208);
-  // Lips
-  S(new THREE.BoxGeometry(.07,.014,.008), 0xd47070, 0, 1.6, .21);
-  // Arms
-  [-.28,.28].forEach(x=>{
-    S(new THREE.CylinderGeometry(.06,.06,.5,12), 0x4f46e5, x, .95, 0, 1,1,1);
-    S(new THREE.SphereGeometry(.065,10,10), 0xf5d0a9, x<0?-.3:.3, .68, 0);
-  });
-  // Legs
-  [-.1,.1].forEach(x=>{
-    S(new THREE.CylinderGeometry(.08,.07,.55,12), 0x1e1b4b, x, .35, 0);
-    S(new THREE.BoxGeometry(.1,.055,.2), 0x111122, x, .04, .04);
-  });
-  scene.add(g);
-  avatarModel = g;
-}
+    scene.add(av);
+    document.getElementById('mic-hint').textContent = 'Click mic to speak';
+    console.log('Avatar loaded, size:', size, 'scale:', s, 'animations:', gltf.animations.map(a=>a.name));
+  },
+  (p) => {
+    const pct = p.total ? Math.round(p.loaded/p.total*100) : '...';
+    document.getElementById('mic-hint').textContent = `Loading avatar ${pct}%`;
+  },
+  (err) => {
+    console.error('Avatar load error:', err);
+    document.getElementById('mic-hint').textContent = 'Click mic to speak';
+    // Build simple human placeholder
+    const g = new THREE.Group();
+    const lm = c => new THREE.MeshLambertMaterial({color:c});
+    const add = (geo,mat,x,y,z) => { const m=new THREE.Mesh(geo,lm(mat)); m.position.set(x,y,z); m.castShadow=true; g.add(m); return m; };
+    add(new THREE.CylinderGeometry(.17,.2,.65,20), 0x4338ca, 0,1.0,0);
+    add(new THREE.CylinderGeometry(.07,.09,.14,12), 0xfcd5b0, 0,1.42,0);
+    const head = add(new THREE.SphereGeometry(.21,32,32), 0xfcd5b0, 0,1.66,0);
+    head.scale.y=1.08; headBone=head;
+    add(new THREE.SphereGeometry(.225,16,8,0,Math.PI*2,0,Math.PI*.52), 0x1a0808, 0,1.72,-.01);
+    [-.075,.075].forEach(x=>{
+      add(new THREE.SphereGeometry(.028,10,10), 0xffffff, x,1.67,.19);
+      add(new THREE.SphereGeometry(.016,10,10), 0x1a2a4a, x,1.67,.21);
+    });
+    add(new THREE.SphereGeometry(.016,8,8), 0xe0b090, 0,1.635,.208);
+    add(new THREE.BoxGeometry(.065,.013,.007), 0xc87070, 0,1.598,.208);
+    [-.28,.28].forEach(x=>{ add(new THREE.CylinderGeometry(.055,.055,.46,12), 0x4338ca, x,.96,0); });
+    [-.1,.1].forEach(x=>{ add(new THREE.CylinderGeometry(.075,.068,.52,14), 0x1e1b4b, x,.35,0); });
+    scene.add(g);
+  }
+);
 
-loadAvatar();
-
-// ===== ANIMATION =====
+// ===== ANIMATION LOOP =====
 const clock = new THREE.Clock();
-let t = 0;
-
+let t=0;
 function animate() {
   requestAnimationFrame(animate);
-  const delta = clock.getDelta();
-  t += delta;
-  if (avatarMixer) avatarMixer.update(delta);
-
-  // Gentle head sway
-  if (headBone && headBone.rotation !== undefined) {
-    headBone.rotation.y = Math.sin(t*.4)*.04;
-    headBone.rotation.x = Math.sin(t*.3)*.02 - .04;
+  const dt = clock.getDelta();
+  t += dt;
+  if (avatarMixer) avatarMixer.update(dt);
+  if (headBone) {
+    headBone.rotation.y = Math.sin(t*.35)*.05;
+    headBone.rotation.x = Math.sin(t*.28)*.025 - .03;
   }
-
-  // Mouth morph when speaking
-  if (mouthMesh && mouthMesh.morphTargetDictionary) {
-    const dict = mouthMesh.morphTargetDictionary;
-    const inf = mouthMesh.morphTargetInfluences;
-    const jawKey = dict['jawOpen'] ?? dict['mouthOpen'] ?? -1;
-    if (jawKey >= 0) {
-      inf[jawKey] = isSpeaking ? Math.abs(Math.sin(t * 10)) * 0.6 : 0;
-    }
-  }
-
-  // Glow pulse
-  glow.material.opacity = 0.06 + Math.sin(t*1.5)*.03 + (isSpeaking?.06:0);
-  rim.intensity = isSpeaking ? 2+Math.sin(t*8)*.8 : 2;
-
+  glow.material.opacity = .05 + Math.sin(t*1.4)*.025 + (isSpeaking?.05:0);
+  rim.intensity = 3 + (isSpeaking ? Math.sin(t*7)*.8 : 0);
   renderer.render(scene, camera);
 }
 animate();
@@ -279,50 +236,50 @@ animate();
 // ===== SESSION =====
 async function startSession() {
   try {
-    const r = await fetch('/session/start', {method:'POST'});
+    const r = await fetch('/session/start',{method:'POST'});
     const d = await r.json();
-    sessionId = d.session_id;
-    sessionStart = Date.now();
-    turnCount = 0;
-    await agentSpeak("Hey. Good to see you. How's your day been going?");
-  } catch(e) {
-    setStatus('Server error — is the backend running?');
-  }
+    sessionId=d.session_id; sessionStart=Date.now(); turnCount=0;
+    await agentSpeak("Hey, good to see you. How's your day been going?");
+  } catch(e) { setStatus('Server error — is the backend running?'); }
 }
 
-// ===== SPEECH =====
+// ===== MIC =====
 function setupRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { setStatus('No speech API — type below'); return; }
-  recognition = new SR();
-  recognition.continuous = false;
-  recognition.interimResults = true;
-  recognition.lang = 'en-US';
-  recognition.onresult = (e) => {
-    const transcript = Array.from(e.results).map(r=>r[0].transcript).join('');
+  if (!SR) { setStatus('Browser speech not supported — try Chrome'); return null; }
+  const r = new SR();
+  r.continuous = false;
+  r.interimResults = true;
+  r.lang = 'en-US';
+  r.onresult = (e) => {
+    const txt = Array.from(e.results).map(x=>x[0].transcript).join('');
     if (e.results[e.results.length-1].isFinal) {
       stopListening();
-      sendMessage(transcript);
+      sendMessage(txt);
     } else {
-      setStatus('🎤 ' + transcript);
+      setStatus('🎤 ' + txt);
     }
   };
-  recognition.onerror = stopListening;
-  recognition.onend = () => { if(isListening) stopListening(); };
+  r.onerror = (e) => { console.error('Speech error:', e.error); stopListening(); setStatus('Mic error: ' + e.error); };
+  r.onend = () => { if(isListening) stopListening(); };
+  return r;
 }
 
 function toggleMic() {
   if (isSpeaking) return;
   isListening ? stopListening() : startListening();
 }
+
 function startListening() {
-  if (!recognition) setupRecognition();
+  if (!recognition) recognition = setupRecognition();
+  if (!recognition) return;
   isListening = true;
   document.getElementById('mic-btn').className = 'listening';
   document.getElementById('mic-btn').textContent = '🔴';
-  setStatus('Listening…');
-  try { recognition.start(); } catch(e){}
+  setStatus('Listening… speak now');
+  try { recognition.start(); } catch(e){ console.error(e); }
 }
+
 function stopListening() {
   isListening = false;
   document.getElementById('mic-btn').className = '';
@@ -330,14 +287,14 @@ function stopListening() {
   try { recognition.stop(); } catch(e){}
 }
 
-// ===== MESSAGING =====
+// ===== CHAT =====
 async function sendMessage(text) {
   if (!text.trim() || !sessionId) return;
   addLine('user', text);
   turnCount++;
   setStatus('Thinking…');
   try {
-    const r = await fetch('/session/chat', {
+    const r = await fetch('/session/chat',{
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({session_id:sessionId, text})
     });
@@ -351,58 +308,54 @@ async function agentSpeak(text) {
   isSpeaking = true;
   document.getElementById('mic-btn').className = 'speaking';
   document.getElementById('mic-btn').textContent = '🔊';
-  await speakWithBrowser(text);
+  setStatus('Speaking…');
+  await new Promise((resolve) => {
+    if (!window.speechSynthesis) { setTimeout(resolve, text.length*42); return; }
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    const v = voices.find(v=>v.name==='Samantha')||voices.find(v=>v.name.includes('Karen'))||voices.find(v=>v.lang==='en-US'&&v.localService)||voices[0];
+    if (v) utt.voice = v;
+    utt.rate = 0.9; utt.pitch = 1.05; utt.volume = 1;
+    utt.onend = resolve; utt.onerror = resolve;
+    window.speechSynthesis.speak(utt);
+  });
   isSpeaking = false;
   document.getElementById('mic-btn').className = '';
   document.getElementById('mic-btn').textContent = '🎤';
   setStatus('Click mic to speak');
 }
 
-function speakWithBrowser(text) {
-  return new Promise((resolve) => {
-    if (!window.speechSynthesis) { setTimeout(resolve, text.length*40); return; }
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    // Pick a good voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v => v.name.includes('Samantha') || v.name.includes('Karen') || v.name.includes('Jenny') || (v.lang === 'en-US' && v.localService));
-    if (preferred) utt.voice = preferred;
-    utt.rate = 0.92;
-    utt.pitch = 1.05;
-    utt.volume = 1;
-    utt.onend = resolve;
-    utt.onerror = resolve;
-    window.speechSynthesis.speak(utt);
-  });
-}
-
 async function endSession() {
   if (!sessionId) { window.location.href='/'; return; }
-  const dur = (Date.now()-sessionStart)/1000;
-  await agentSpeak("It was good talking with you. Take care.");
-  await fetch('/session/end', {
+  const dur=(Date.now()-sessionStart)/1000;
+  await agentSpeak("It was good talking with you. Take care of yourself.");
+  await fetch('/session/end',{
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({session_id:sessionId, duration_seconds:dur, turn_count:turnCount})
+    body:JSON.stringify({session_id:sessionId, duration_seconds:dur, turn_count:turnCount})
   });
-  setTimeout(()=>{ window.location.href='/'; }, 1500);
+  setTimeout(()=>window.location.href='/', 1200);
 }
 
 function addLine(speaker, text) {
-  const d = document.createElement('div');
-  d.className = `line ${speaker}`;
-  d.textContent = text;
-  const t = document.getElementById('transcript');
-  t.appendChild(d); t.scrollTop = t.scrollHeight;
+  const d=document.createElement('div');
+  d.className=`line ${speaker}`; d.textContent=text;
+  const t=document.getElementById('transcript');
+  t.appendChild(d); t.scrollTop=t.scrollHeight;
 }
-function setStatus(m) { document.getElementById('status-text').textContent = m; }
+function setStatus(m) { document.getElementById('status-text').textContent=m; }
 
-window.addEventListener('resize', ()=>{
-  camera.aspect = window.innerWidth/window.innerHeight;
+window.addEventListener('resize',()=>{
+  camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(window.innerWidth,window.innerHeight);
 });
 
-setupRecognition();
+// Wait for voices to load then start
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {};
+  window.speechSynthesis.getVoices();
+}
 startSession();
 </script>
 </body>
