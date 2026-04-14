@@ -109,8 +109,8 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x06060f, 5, 18);
 
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.1, 50);
-camera.position.set(0, 1.0, 2.5);
-camera.lookAt(0, 1.0, 0);
+camera.position.set(0, 1.2, 2.6);
+camera.lookAt(0, 1.1, 0);
 
 // ===== LIGHTS =====
 scene.add(new THREE.AmbientLight(0xffffff, 0.8));
@@ -158,18 +158,17 @@ function buildAvatar() {
   const loader = new THREE.GLTFLoader();
   loader.load('/static/avatar.glb', (gltf) => {
     const av = gltf.scene;
-    // Michelle is already 1.66m in meters — no scaling needed
+    // Model is 1.85m in meters — no scaling needed
     av.position.set(0, 0, 0);
-    av.rotation.y = Math.PI; // face camera
     av.traverse(n => {
       n.castShadow = true; n.receiveShadow = true;
-      if (n.name === 'mixamorig:Head') headBone = n;
+      if (n.name === 'Head') headBone = n;
     });
     if (gltf.animations?.length) {
       avatarMixer = new THREE.AnimationMixer(av);
-      // Play TPose as idle
-      const anim = gltf.animations.find(a => /tpose/i.test(a.name)) || gltf.animations[0];
+      const anim = gltf.animations[0]; // IdleV4.2
       avatarMixer.clipAction(anim).play();
+      console.log('Playing animation:', anim.name);
     }
     scene.add(av);
     document.getElementById('mic-hint').textContent = 'Click mic to speak';
