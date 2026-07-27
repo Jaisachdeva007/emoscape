@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from typing import List, Optional
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
@@ -17,6 +17,16 @@ import os
 from database import init_db, get_db, ReflectionSession, Utterance
 from pipeline import extract_session_features, get_valence
 from agent import get_agent_response, generate_session_summary, generate_session_theme, generate_day_summary
+
+_whisper_model = None
+
+def get_whisper():
+    """Lazily load the Whisper model on first use so server startup stays fast."""
+    global _whisper_model
+    if _whisper_model is None:
+        import whisper
+        _whisper_model = whisper.load_model("base")
+    return _whisper_model
 
 app = FastAPI(title="EmoScape API", version="1.0.0")
 
@@ -240,6 +250,20 @@ async def tts(text: str, voice: str = "en-US-JennyNeural"):
         return StreamingResponse(iter_file(), media_type='audio/mpeg')
     except Exception as e:
         raise HTTPException(500, f"TTS error: {e}")
+
+@app.post("/stt")
+async def speech_to_text(audio: UploadFile):
+    """Transcribe an uploaded audio recording (WAV) to text using local Whisper."""
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+        f.write(await audio.read())
+        tmpfile = f.name
+    try:
+        result = get_whisper().transcribe(tmpfile, fp16=False)
+        return {"text": result["text"].strip()}
+    except Exception as e:
+        raise HTTPException(500, f"STT error: {e}")
+    finally:
+        os.unlink(tmpfile)
 
 @app.post("/session/chat-speak")
 async def chat_speak(msg: ChatMessage, db: Session = Depends(get_db)):

@@ -1,0 +1,281 @@
+.ui-root {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    font-size: 14px;
+}
+
+/* TOP BAR */
+.top-bar {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    translate: -50% 0;
+    background-color: rgba(8, 8, 24, 0.9);
+    border-width: 1px;
+    border-color: rgba(139, 92, 246, 0.28);
+    border-radius: 50px;
+    padding: 9px 22px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.brand {
+    color: rgb(167, 139, 250);
+    -unity-font-style: bold;
+    font-size: 15px;
+    margin-right: 14px;
+}
+
+.tab-btn {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    color: rgb(88, 88, 122);
+    font-size: 13px;
+    padding: 6px 15px;
+    border-radius: 20px;
+    margin-right: 4px;
+}
+
+.tab-btn--active {
+    background-color: rgba(139, 92, 246, 0.22);
+    color: rgb(196, 181, 253);
+}
+
+.session-count {
+    font-size: 11px;
+    color: rgb(52, 52, 78);
+    margin-left: 8px;
+}
+
+.status-label {
+    position: absolute;
+    top: 72px;
+    right: 20px;
+    font-size: 12px;
+    color: rgb(61, 61, 82);
+}
+
+/* LEGEND */
+.legend {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background-color: rgba(8, 8, 20, 0.75);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: none;
+}
+
+.legend-title {
+    color: rgb(124, 106, 245);
+    margin-bottom: 8px;
+    font-size: 12px;
+    -unity-font-style: bold;
+}
+
+.legend-item {
+    font-size: 11px;
+    color: rgb(90, 90, 114);
+    margin-bottom: 5px;
+}
+
+.legend-item--red { color: rgb(239, 68, 68); }
+.legend-item--indigo { color: rgb(67, 56, 202); }
+.legend-item--amber { color: rgb(245, 158, 11); }
+.legend-item--cyan { color: rgb(6, 182, 212); }
+
+.legend-note {
+    font-size: 11px;
+    color: rgb(90, 90, 114);
+}
+
+/* TOOLTIP */
+.tooltip {
+    position: absolute;
+    background-color: rgba(8, 8, 24, 0.96);
+    border-width: 1px;
+    border-color: rgba(139, 92, 246, 0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 200px;
+    max-width: 260px;
+    display: none;
+}
+
+.t-theme { color: rgb(167, 139, 250); font-size: 13px; margin-bottom: 4px; -unity-font-style: bold; }
+.t-date { font-size: 11px; color: rgb(90, 90, 114); margin-bottom: 6px; }
+.t-summary { font-size: 12px; color: rgb(144, 144, 168); white-space: normal; margin-bottom: 8px; }
+.t-stats { font-size: 11px; color: rgb(90, 90, 114); }
+
+/* REFLECT DRAWER */
+.reflect-panel {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 380px;
+    background-color: rgba(8, 8, 22, 0.95);
+    border-left-width: 1px;
+    border-left-color: rgba(139, 92, 246, 0.15);
+    translate: 100% 0;
+    transition-property: translate;
+    transition-duration: 0.3s;
+    flex-direction: column;
+}
+
+.reflect-panel--open {
+    translate: 0 0;
+}
+
+.panel-header {
+    padding: 20px 20px 16px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-title { color: rgb(196, 181, 253); font-size: 15px; }
+.close-btn { background-color: rgba(0,0,0,0); border-width: 0; color: rgb(90, 90, 114); font-size: 16px; }
+
+.chat-area {
+    flex-grow: 1;
+    padding: 16px;
+}
+
+.msg {
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    white-space: normal;
+    margin-bottom: 10px;
+    max-width: 92%;
+}
+
+.msg--user {
+    background-color: rgba(99, 102, 241, 0.15);
+    color: rgb(196, 181, 253);
+    align-self: flex-end;
+}
+
+.msg--agent {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: rgb(212, 212, 232);
+    align-self: flex-start;
+}
+
+.msg--thinking { color: rgb(74, 74, 98); }
+
+.panel-footer {
+    padding: 14px 16px 16px;
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+.text-input {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-width: 1px;
+    border-color: rgba(139, 92, 246, 0.2);
+    border-radius: 10px;
+    color: rgb(228, 228, 240);
+    min-height: 60px;
+    margin-bottom: 10px;
+}
+
+.btn-row { flex-direction: row; }
+
+.btn-send {
+    flex-grow: 1;
+    background-color: rgb(124, 90, 230);
+    border-width: 0;
+    border-radius: 8px;
+    color: white;
+    -unity-font-style: bold;
+    margin-right: 8px;
+}
+
+.btn-end {
+    background-color: rgba(239, 68, 68, 0.12);
+    border-width: 1px;
+    border-color: rgba(239, 68, 68, 0.25);
+    border-radius: 8px;
+    color: rgb(248, 113, 113);
+    -unity-font-style: bold;
+}
+
+/* DIARY PANEL */
+.diary-panel {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgb(6, 6, 15);
+    display: none;
+    padding: 80px 24px;
+}
+
+.diary-close {
+    position: absolute;
+    top: 22px; right: 24px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: rgb(90, 90, 114);
+}
+
+.diary-scroll { max-width: 680px; }
+
+.diary-header { align-items: center; margin-bottom: 48px; }
+.diary-title { font-size: 28px; -unity-font-style: bold; color: rgb(228, 228, 240); }
+.diary-subtitle { font-size: 12px; color: rgb(61, 61, 82); margin-top: 6px; }
+.diary-streak {
+    color: rgb(167, 139, 250);
+    background-color: rgba(139, 92, 246, 0.1);
+    border-width: 1px;
+    border-color: rgba(139, 92, 246, 0.2);
+    border-radius: 50px;
+    padding: 6px 16px;
+    margin-top: 16px;
+}
+
+.diary-day { margin-bottom: 48px; }
+.diary-day-label {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: rgb(45, 45, 66);
+    margin-bottom: 20px;
+}
+
+.diary-day-entry {
+    background-color: rgba(139, 92, 246, 0.06);
+    border-width: 1px;
+    border-color: rgba(139, 92, 246, 0.15);
+    border-radius: 14px;
+    padding: 22px 26px;
+    margin-bottom: 20px;
+}
+
+.diary-day-entry-text { font-size: 14px; color: rgb(176, 160, 216); white-space: normal; }
+
+.diary-sessions-label {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: rgb(42, 42, 62);
+    margin-bottom: 10px;
+}
+
+.diary-session-card {
+    flex-direction: row;
+    background-color: rgba(255, 255, 255, 0.02);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.dsc-left { width: 3px; }
+.dsc-body { padding: 12px 16px; flex-grow: 1; }
+.dsc-top { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.dsc-theme { font-size: 13px; color: rgb(196, 196, 216); }
+.dsc-badge { font-size: 11px; border-radius: 50px; padding: 3px 8px; }
+.dsc-time { font-size: 11px; color: rgb(56, 56, 78); }

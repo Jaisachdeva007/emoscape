@@ -1,0 +1,63 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <Style src="MainUI.uss" />
+  <ui:VisualElement name="ui-root" class="ui-root" picking-mode="Ignore">
+
+    <ui:VisualElement name="top-bar" class="top-bar">
+      <ui:Label text="EmoScape" name="brand" class="brand" />
+      <ui:Button text="Landscape" name="btn-landscape" class="tab-btn tab-btn--active" />
+      <ui:Button text="Reflect" name="btn-reflect" class="tab-btn" />
+      <ui:Button text="Diary" name="btn-diary" class="tab-btn" />
+      <ui:Button text="Talk" name="btn-talk" class="tab-btn" />
+      <ui:Label text="0 sessions" name="session-count" class="session-count" />
+    </ui:VisualElement>
+
+    <ui:Label text="Loading…" name="status-label" class="status-label" picking-mode="Ignore" />
+
+    <ui:VisualElement name="legend" class="legend" picking-mode="Ignore">
+      <ui:Label text="Visual Guide" class="legend-title" />
+      <ui:Label text="■ Stressed — negative + activated" class="legend-item legend-item--red" />
+      <ui:Label text="■ Depleted — negative + calm" class="legend-item legend-item--indigo" />
+      <ui:Label text="■ Energized — positive + activated" class="legend-item legend-item--amber" />
+      <ui:Label text="■ Peaceful — positive + calm" class="legend-item legend-item--cyan" />
+      <ui:Label text="↑ Higher = more positive" class="legend-note" />
+      <ui:Label text="Thicker = longer session" class="legend-note" />
+    </ui:VisualElement>
+
+    <ui:VisualElement name="tooltip" class="tooltip" picking-mode="Ignore">
+      <ui:Label text="Theme" name="t-theme" class="t-theme" />
+      <ui:Label text="" name="t-date" class="t-date" />
+      <ui:Label text="" name="t-summary" class="t-summary" />
+      <ui:Label text="" name="t-stats" class="t-stats" />
+    </ui:VisualElement>
+
+    <ui:VisualElement name="reflect-panel" class="reflect-panel">
+      <ui:VisualElement name="panel-header" class="panel-header">
+        <ui:Label text="✦ Reflection Space" class="panel-title" />
+        <ui:Button text="✕" name="close-panel" class="close-btn" />
+      </ui:VisualElement>
+      <ui:ScrollView name="chat-area" class="chat-area">
+        <ui:Label text="Welcome. I'm here to listen. What's on your mind today?" class="msg msg--agent" />
+      </ui:ScrollView>
+      <ui:VisualElement name="panel-footer" class="panel-footer">
+        <ui:TextField name="text-input" multiline="true" class="text-input" />
+        <ui:VisualElement name="btn-row" class="btn-row">
+          <ui:Button text="Send" name="btn-send" class="btn-send" />
+          <ui:Button text="End Session" name="btn-end" class="btn-end" />
+        </ui:VisualElement>
+      </ui:VisualElement>
+    </ui:VisualElement>
+
+    <ui:VisualElement name="diary-panel" class="diary-panel">
+      <ui:Button text="✕ Close" name="diary-close" class="diary-close" />
+      <ui:ScrollView name="diary-scroll" class="diary-scroll">
+        <ui:VisualElement name="diary-header" class="diary-header">
+          <ui:Label text="Jai's Journal" class="diary-title" />
+          <ui:Label text="A private record of your inner world" class="diary-subtitle" />
+          <ui:Label text="Loading…" name="diary-streak" class="diary-streak" />
+        </ui:VisualElement>
+        <ui:VisualElement name="diary-entries" class="diary-entries" />
+      </ui:ScrollView>
+    </ui:VisualElement>
+
+  </ui:VisualElement>
+</ui:UXML>
