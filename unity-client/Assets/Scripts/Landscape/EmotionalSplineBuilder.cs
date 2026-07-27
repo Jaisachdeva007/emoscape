@@ -40,8 +40,8 @@ namespace EmoScape.Landscape
                     float thick = 0.09f + data[i].intensity * 0.26f;
                     Color col = SessionColorUtil.GetColor(data[i].valence, data[i].arousal);
 
-                    BuildTubeMesh($"Tube_{i}", segPts, thick, col, 1f, 1.7f, glow: false);
-                    BuildTubeMesh($"TubeGlow_{i}", segPts, thick + 0.22f, col, 0.3f, 0f, glow: true);
+                    BuildTubeMesh($"Tube_{i}", segPts, thick, col, 1f, 1.0f, glow: false);
+                    BuildTubeMesh($"TubeGlow_{i}", segPts, thick + 0.16f, col, 0.2f, 0f, glow: true);
                 }
             }
 
@@ -73,7 +73,7 @@ namespace EmoScape.Landscape
             node.transform.localScale = Vector3.one * size * 2f; // Unity's primitive sphere has radius 0.5
             var nr = node.GetComponent<MeshRenderer>();
             nr.material = URPMaterialFactory.CreateEmissiveTransparentLit();
-            URPMaterialFactory.ApplyColor(nr, col, 1f, 2.4f);
+            URPMaterialFactory.ApplyColor(nr, col, 1f, 1.4f);
             node.AddComponent<SessionNodeRef>().Session = s;
             nodeEntries.Add(new NodeEntry { transform = node.transform, baseScale = size * 2f, index = i });
 

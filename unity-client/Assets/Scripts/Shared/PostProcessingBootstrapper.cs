@@ -16,9 +16,9 @@ namespace EmoScape.Shared
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
 
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(0.55f);
-            bloom.intensity.Override(1.6f);
-            bloom.scatter.Override(0.75f);
+            bloom.threshold.Override(0.75f);
+            bloom.intensity.Override(0.9f);
+            bloom.scatter.Override(0.65f);
 
             var vignette = profile.Add<Vignette>(true);
             vignette.intensity.Override(0.35f);
