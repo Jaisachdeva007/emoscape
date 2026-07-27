@@ -37,11 +37,11 @@ namespace EmoScape.Landscape
                     float tEnd = (i + 1) / (float)(n - 1);
                     var segPts = CatmullRomSpline3D.SampleRange(pts, tStart, tEnd, 24);
 
-                    float thick = 0.04f + data[i].intensity * 0.18f;
+                    float thick = 0.09f + data[i].intensity * 0.26f;
                     Color col = SessionColorUtil.GetColor(data[i].valence, data[i].arousal);
 
-                    BuildTubeMesh($"Tube_{i}", segPts, thick, col, 0.9f, 0.5f, glow: false);
-                    BuildTubeMesh($"TubeGlow_{i}", segPts, thick + 0.12f, col, 0.08f, 0f, glow: true);
+                    BuildTubeMesh($"Tube_{i}", segPts, thick, col, 1f, 1.7f, glow: false);
+                    BuildTubeMesh($"TubeGlow_{i}", segPts, thick + 0.22f, col, 0.3f, 0f, glow: true);
                 }
             }
 
@@ -73,7 +73,7 @@ namespace EmoScape.Landscape
             node.transform.localScale = Vector3.one * size * 2f; // Unity's primitive sphere has radius 0.5
             var nr = node.GetComponent<MeshRenderer>();
             nr.material = URPMaterialFactory.CreateEmissiveTransparentLit();
-            URPMaterialFactory.ApplyColor(nr, col, 1f, 0.8f);
+            URPMaterialFactory.ApplyColor(nr, col, 1f, 2.4f);
             node.AddComponent<SessionNodeRef>().Session = s;
             nodeEntries.Add(new NodeEntry { transform = node.transform, baseScale = size * 2f, index = i });
 
@@ -87,7 +87,7 @@ namespace EmoScape.Landscape
             var hr = halo.GetComponent<MeshRenderer>();
             hr.material = URPMaterialFactory.CreateUnlitTransparent(doubleSided: false);
             hr.material.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Front);
-            URPMaterialFactory.ApplyColor(hr, col, 0.12f);
+            URPMaterialFactory.ApplyColor(hr, col, 0.28f);
 
             // Outer ring — billboards toward camera each frame
             var ring = new GameObject($"Ring_{i}");
@@ -97,7 +97,7 @@ namespace EmoScape.Landscape
             rmf.mesh = ProceduralMeshUtil.CreateRing(size + 0.3f, size + 0.4f, 32);
             var rmr = ring.AddComponent<MeshRenderer>();
             rmr.material = URPMaterialFactory.CreateUnlitTransparent(doubleSided: true);
-            URPMaterialFactory.ApplyColor(rmr, col, 0.25f);
+            URPMaterialFactory.ApplyColor(rmr, col, 0.45f);
             rings.Add(ring.transform);
         }
 

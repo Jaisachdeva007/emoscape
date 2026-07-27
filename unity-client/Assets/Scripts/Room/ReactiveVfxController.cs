@@ -17,7 +17,7 @@ namespace EmoScape.Room
         public Light Key, Fill, Rim;
 
         MeshRenderer glowRenderer;
-        readonly Color glowColor = SessionColorUtil.HexColor(0x7c3aed);
+        readonly Color glowColor = SessionColorUtil.HexColor(0x7c3aed) * 2f;
 
         Light upLight;
         MeshRenderer auraRingRenderer, auraGlowRenderer;
@@ -32,7 +32,7 @@ namespace EmoScape.Room
         static readonly float[] AuroraBaseOpacity = { 0.012f, 0.008f, 0.005f };
 
         MeshRenderer shaftRenderer;
-        readonly Color shaftColor = SessionColorUtil.HexColor(0x7c3aed);
+        readonly Color shaftColor = SessionColorUtil.HexColor(0x7c3aed) * 2f;
 
         readonly List<(Transform t, MeshRenderer mr, Color color, float offset)> bgOrbs = new();
         readonly List<(Transform t, MeshRenderer mr, float scale, float opacity)> ripples = new();
@@ -191,7 +191,7 @@ namespace EmoScape.Room
                 mf.mesh = ProceduralMeshUtil.CreateRing(radii[i] - 0.02f, radii[i] + 0.02f, 64);
                 var mr = go.AddComponent<MeshRenderer>();
                 mr.material = URPMaterialFactory.CreateUnlitTransparent(doubleSided: true);
-                var color = SessionColorUtil.HexColor(i < 2 ? 0x9b72ff : 0x5b4aee);
+                var color = SessionColorUtil.HexColor(i < 2 ? 0x9b72ff : 0x5b4aee) * 2f;
                 float baseOpacity = Mathf.Max(0.06f, 0.32f - i * 0.05f);
                 URPMaterialFactory.ApplyColor(mr, color, baseOpacity);
                 groundRings.Add((mr, color, baseOpacity, i));
@@ -240,7 +240,7 @@ namespace EmoScape.Room
             rmf.mesh = ProceduralMeshUtil.CreateRing(0.52f, 0.6f, 64);
             auraRingRenderer = ringGo.AddComponent<MeshRenderer>();
             auraRingRenderer.material = URPMaterialFactory.CreateUnlitTransparent(doubleSided: true);
-            URPMaterialFactory.ApplyColor(auraRingRenderer, SessionColorUtil.HexColor(0x8b5cf6), 0f);
+            URPMaterialFactory.ApplyColor(auraRingRenderer, SessionColorUtil.HexColor(0x8b5cf6) * 2.2f, 0f);
             auraRingT = ringGo.transform;
 
             var glowGo = new GameObject("AuraGlow");
@@ -250,7 +250,7 @@ namespace EmoScape.Room
             gmf.mesh = ProceduralMeshUtil.CreateRing(0.38f, 0.88f, 64);
             auraGlowRenderer = glowGo.AddComponent<MeshRenderer>();
             auraGlowRenderer.material = URPMaterialFactory.CreateUnlitTransparent(doubleSided: true);
-            URPMaterialFactory.ApplyColor(auraGlowRenderer, SessionColorUtil.HexColor(0x6d28d9), 0f);
+            URPMaterialFactory.ApplyColor(auraGlowRenderer, SessionColorUtil.HexColor(0x6d28d9) * 2.2f, 0f);
             auraGlowT = glowGo.transform;
         }
 
@@ -264,7 +264,7 @@ namespace EmoScape.Room
                 orb.transform.SetParent(transform, false);
                 Destroy(orb.GetComponent<Collider>());
                 orb.transform.localScale = Vector3.one * 0.075f * 2f;
-                var color = SessionColorUtil.HexColor(colors[i]);
+                var color = SessionColorUtil.HexColor(colors[i]) * 2.3f;
                 var mr = orb.GetComponent<MeshRenderer>();
                 mr.material = URPMaterialFactory.CreateUnlitTransparent(doubleSided: false);
                 URPMaterialFactory.ApplyColor(mr, color, 0.95f);
@@ -284,11 +284,11 @@ namespace EmoScape.Room
 
         void BuildWaveArc()
         {
-            waveLine1 = CreateWaveLine("WaveArc1");
-            waveLine2 = CreateWaveLine("WaveArc2");
+            waveLine1 = CreateWaveLine("WaveArc1", SessionColorUtil.HexColor(0xb4a0ff) * 2f);
+            waveLine2 = CreateWaveLine("WaveArc2", SessionColorUtil.HexColor(0x7ee8fa) * 2f);
         }
 
-        LineRenderer CreateWaveLine(string name)
+        LineRenderer CreateWaveLine(string name, Color color)
         {
             var go = new GameObject(name);
             go.transform.SetParent(transform, false);
@@ -297,7 +297,8 @@ namespace EmoScape.Room
             lr.useWorldSpace = false;
             lr.startWidth = lr.endWidth = 0.012f;
             lr.material = URPMaterialFactory.CreateUnlitTransparent();
-            lr.startColor = lr.endColor = new Color(0, 0, 0, 0);
+            color.a = 0f;
+            lr.startColor = lr.endColor = color;
             for (int i = 0; i < WaveN; i++)
                 lr.SetPosition(i, new Vector3((i / (float)(WaveN - 1) - 0.5f) * 1.5f, 2.22f, 0f));
             return lr;
@@ -370,8 +371,8 @@ namespace EmoScape.Room
             float curOpacity = mpb.GetColor("_BaseColor").a;
             float auraTarget = speaking ? 0.42f + Mathf.Sin(t * 9f) * 0.18f : (listening ? 0.1f : 0f);
             float newOpacity = curOpacity + (auraTarget - curOpacity) * 0.09f;
-            URPMaterialFactory.ApplyColor(auraRingRenderer, SessionColorUtil.HexColor(0x8b5cf6), newOpacity);
-            URPMaterialFactory.ApplyColor(auraGlowRenderer, SessionColorUtil.HexColor(0x6d28d9), newOpacity * 0.42f);
+            URPMaterialFactory.ApplyColor(auraRingRenderer, SessionColorUtil.HexColor(0x8b5cf6) * 2.2f, newOpacity);
+            URPMaterialFactory.ApplyColor(auraGlowRenderer, SessionColorUtil.HexColor(0x6d28d9) * 2.2f, newOpacity * 0.42f);
             float scale = 1f + (speaking ? Mathf.Sin(t * 5f) * 0.07f : 0f);
             auraRingT.localScale = Vector3.one * scale;
             auraGlowT.localScale = Vector3.one * scale;
