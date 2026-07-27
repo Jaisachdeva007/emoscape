@@ -35,15 +35,61 @@ namespace EmoScape.Shared
             return mat;
         }
 
+        static Texture2D softDotTexture;
+
         public static Material CreateUnlitParticleMaterial()
         {
+            var legacyShader = Shader.Find("Particles/Alpha Blended");
+            var tex = GetSoftDotTexture();
+
+            if (legacyShader != null)
+            {
+                var legacyMat = new Material(legacyShader);
+                legacyMat.mainTexture = tex;
+                if (legacyMat.HasProperty("_TintColor")) legacyMat.SetColor("_TintColor", Color.white);
+                return legacyMat;
+            }
+
             var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit")
                          ?? Shader.Find("Particles/Standard Unlit");
             var mat = new Material(shader);
             mat.SetFloat(SurfaceId, 1f);
             mat.SetFloat(BlendId, 0f);
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.mainTexture = tex;
+            if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", tex);
+            if (mat.HasProperty("_MainTex")) mat.SetTexture("_MainTex", tex);
             return mat;
+        }
+
+        /// <summary>
+        /// A soft radial-falloff dot, generated in code (no imported texture asset) so
+        /// particles render as glowing round points instead of Unity's default flat
+        /// square billboard.
+        /// </summary>
+        static Texture2D GetSoftDotTexture()
+        {
+            if (softDotTexture != null) return softDotTexture;
+
+            const int size = 64;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var center = new Vector2(size / 2f, size / 2f);
+            var pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), center) / (size / 2f);
+                    float alpha = Mathf.Clamp01(1f - dist);
+                    alpha = Mathf.Pow(alpha, 1.8f); // soft falloff, bright core
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
+                }
+            }
+            tex.SetPixels(pixels);
+            tex.Apply();
+            softDotTexture = tex;
+            return tex;
         }
 
         static void ConfigureTransparent(Material mat, bool doubleSided)
