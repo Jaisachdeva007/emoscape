@@ -43,12 +43,39 @@ Do NOT say "I cannot", do NOT add resources, do NOT break character.
 Example: "Today was rough. Sarah and I broke up and I spent most of the day feeling like shit. I kept thinking I just wanted it all to stop. I don't really know where to go from here."
 3-5 sentences. Output ONLY the diary entry. Nothing else. Start writing now."""
 
+# High-confidence crisis phrases. Deliberately narrower than pipeline.py's NEGATIVE_OVERRIDES
+# (which also catches milder distress language for sentiment scoring) — this list exists to
+# trigger a guaranteed, non-LLM-dependent safety response, not to flag every sad session.
+CRISIS_PHRASES = {
+    'kill myself', 'end my life', 'end it all', 'want to die', 'wanna die',
+    'suicidal', 'suicide', "don't want to be here anymore", 'not want to be here anymore',
+    'better off dead', 'no reason to live', 'no point in living',
+}
+
+CRISIS_RESPONSE = (
+    "That sounds like an incredibly heavy place to be, and I'm really glad you told me. "
+    "I'm not able to give you the kind of help you deserve right now — please reach out to "
+    "9-8-8: Suicide Crisis Helpline (call or text 988, 24/7) or go to your nearest emergency "
+    "room if you're in immediate danger. You matter, and there are people trained for exactly this."
+)
+
+
+def _detect_crisis(text: str) -> bool:
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in CRISIS_PHRASES)
+
+
 def get_agent_response(
     user_message: str,
     conversation_history: List[Dict],
     past_session_summaries: List[str] = None
 ) -> str:
     """Get a reflective response from the local LLM."""
+    # Deterministic safety net: crisis-level language gets a fixed, guaranteed response
+    # instead of depending on the LLM to reliably follow the system prompt's instruction.
+    if _detect_crisis(user_message):
+        return CRISIS_RESPONSE
+
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
     if past_session_summaries:
